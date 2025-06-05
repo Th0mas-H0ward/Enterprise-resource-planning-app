@@ -1,0 +1,238 @@
+<form id="orderForm" action="/place-order" method="POST">
+  <h2>Нове замовлення</h2>
+  <div class="input-field">
+    <input type="text" id="date" name="delivery_date" class="datepicker" autocomplete="off">
+    <label for="date">Бажана дата доставки</label>
+  </div>
+  <div class="row">
+    <div class="input-field col s4">
+      <input id="name" type="text" class="validate" name="name">
+      <label for="name">Замовник</label>
+    </div>
+    <div class="input-field col s4">
+      <input id="phone" type="text" class="validate" name="phone">
+      <label for="phone">Телефон</label>
+    </div>
+    <div class="input-field col s4">
+      <input id="email" type="text" class="validate" name="email">
+      <label for="email">Email</label>
+    </div>
+  </div>
+  <table class="order-table">
+    <thead>
+      <tr>
+        <th>Категорія</th>
+        <th>Продукт</th>
+        <th>Кількість</th>
+        <th>Вартість</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody id="productRows">
+      <tr>
+        <td>
+          <div class="input-field">
+            <select class="category" name="categories" onchange="filterProducts(this)" data-index="0">
+              <option value="" disabled selected>Оберіть категорію</option>
+              {{#each uniqueCategories}}
+              <option value="{{this}}">{{this}}</option>
+              {{/each}}
+            </select>
+          </div>
+        </td>
+        <td>
+          <div class="input-field">
+            <select class="product" name="products[0][title]" onchange="updateOrderSummary()">
+              <option value="" disabled selected>Оберіть продукт</option>
+            </select>
+          </div>
+        </td>
+        <td>
+          <div class="input-field">
+            <input type="number" class="quantity" name="products[0][quantity]" min="1" oninput="updateOrderSummary()">
+          </div>
+        </td>
+        <td>
+          <div class="chip productCost">0 грн.</div>
+        </td>
+        <td><button type="button" class="btn waves-effect waves-light red" onclick="removeProductRow(this)"><i
+              class="material-icons">delete</i></button></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="chips" style="padding: 10px;" id="orderSummary">
+    <div class="chip totalQuantityChip">Загальна кількість: </div>
+    <div class="chip totalPriceChip">Загальна вартість: </div>
+  </div>
+
+  <button type="button" class="btn-floating waves-effect waves-light deep-purple" onclick="addProductRow()"><i
+      class="large material-icons">add_circle</i></button>
+
+  <button type="button" class="btn waves-effect waves-light" onclick="validateForm()">Створити</button>
+</form>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+<script>
+  const products = {{{ products }}};
+  document.addEventListener('DOMContentLoaded', function () {
+    var datepicker = document.querySelectorAll('.datepicker');
+    M.Datepicker.init(datepicker, {
+      format: 'dd.mm.yyyy',
+      showClearBtn: true,
+      i18n: {
+        cancel: 'Відміна',
+        clear: 'Очистити',
+        done: 'Готово',
+        months: ["Січень", "Лютий", "Березень", "Квітень", "Травень", "Червень", "Липень", "Серпень", "Вересень", "Жовтень", "Листопад", "Грудень"],
+        monthsShort: ["Січ", "Лют", "Бер", "Квт", "Трав", "Черв", "Лип", "Сер", "Вер", "Жов", "Лис", "Груд"],
+        weekdays: ["Неділя", "Понеділок", "Вівторок", "Середа", "Четвер", "П'ятниця", "Субота"],
+        weekdaysShort: ["Нд", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"],
+        weekdaysAbbrev: ["Н", "П", "В", "С", "Ч", "П", "С"]
+      }
+    });
+
+    var selects = document.querySelectorAll('select');
+    M.FormSelect.init(selects);
+  });
+
+  async function validateForm() {
+    var form = document.getElementById('orderForm');
+    var isValid = form.checkValidity();
+    if (isValid) {
+      var inputs = form.querySelectorAll('input, select');
+      var allFieldsFilled = true;
+      inputs.forEach(function (input) {
+        if (!input.value.trim()) {
+          allFieldsFilled = false;
+        }
+      });
+      if (!allFieldsFilled) {
+        M.toast({ html: 'Необхідно заповнити всі поля!', classes: 'red' });
+      } else {
+        M.toast({ html: 'Нове замовлення додано!' });
+        form.submit();
+      }
+    } else {
+      var invalidFields = form.querySelectorAll(':invalid');
+      invalidFields.forEach(function (field) {
+        field.classList.add('invalid');
+      });
+    }
+  }
+
+  function addProductRow() {
+    var productRows = document.getElementById('productRows');
+    var newRow = document.createElement('tr');
+
+    var lastProductIndex = Array.from(document.querySelectorAll('input[name^="products["]')).pop()?.name.split('[')[1].split(']')[0] || -1;
+    var rowIndex = parseInt(lastProductIndex) + 1;
+
+    newRow.innerHTML = `
+      <tr>
+        <td>
+          <div class="input-field">
+            <select class="category" name="categories" onchange="filterProducts(this)" data-index="${rowIndex}">
+              <option value="" disabled selected>Оберіть категорію</option>
+              {{#each uniqueCategories}}
+              <option value="{{this}}">{{this}}</option>
+              {{/each}}
+            </select>
+          </div>
+        </td>
+        <td>
+          <div class="input-field">
+            <select class="product" name="products[${rowIndex}][title]" onchange="updateOrderSummary()">
+              <option value="" disabled selected>Оберіть продукт</option>
+            </select>
+          </div>
+        </td>
+        <td>
+          <div class="input-field">
+            <input type="number" class="quantity" name="products[${rowIndex}][quantity]" min="1" oninput="updateOrderSummary()">
+          </div>  
+        </td>
+        <td><div class="chip productCost">0 грн.</div></td>
+        <td><button type="button" class="btn waves-effect waves-light red" onclick="removeProductRow(this)"><i class="material-icons">delete</i></button></td>
+      </tr>
+    `;
+    productRows.appendChild(newRow);
+
+    M.FormSelect.init(newRow.querySelectorAll('select'));
+  }
+
+  function removeProductRow(button) {
+    var row = button.parentNode.parentNode;
+    row.parentNode.removeChild(row);
+    updateOrderSummary();
+  }
+
+  function updateOrderSummary() {
+    var totalQuantity = 0;
+    var totalPrice = 0;
+
+    var rows = document.querySelectorAll('#productRows tr');
+    rows.forEach(function (row) {
+      var quantity = parseFloat(row.querySelector('.quantity').value);
+      var productSelect = row.querySelector('.product');
+      var productIndex = productSelect.selectedIndex;
+      var productPrice = parseFloat(productSelect.options[productIndex].getAttribute('data-price'));
+
+      if (!isNaN(quantity) && !isNaN(productPrice)) {
+        var productCost = quantity * productPrice;
+        var productCostChip = row.querySelector('.productCost');
+        productCostChip.innerHTML = productCost + ' грн.';
+        totalQuantity += quantity;
+        totalPrice += productCost;
+
+        // Получаем индекс продукта из имени поля ввода количества
+        var quantityInput = row.querySelector('.quantity');
+        var index = quantityInput.name.match(/\[(\d+)\]/)[1];
+
+        // Сохраняем цену продукта с учетом количества в скрытом поле формы
+        var priceInput = document.createElement('input');
+        priceInput.type = 'hidden';
+        priceInput.name = `products[${index}][price]`;
+        priceInput.value = productCost;
+
+        // Удаляем старое скрытое поле, если оно существует
+        var oldPriceInput = row.querySelector(`input[name="products[${index}][price]"]`);
+        if (oldPriceInput) {
+          row.removeChild(oldPriceInput);
+        }
+
+        row.appendChild(priceInput);
+      }
+    });
+
+    // Выводим общее количество в чип
+    var totalQuantityChip = document.querySelector('.totalQuantityChip');
+    totalQuantityChip.innerHTML = 'Загальна кількість: ' + totalQuantity + ' шт.';
+
+    // Выводим общую стоимость в чип
+    var totalPriceChip = document.querySelector('.totalPriceChip');
+    totalPriceChip.innerHTML = 'Загальна вартість: ' + totalPrice + ' грн.';
+  }
+
+  function filterProducts(categorySelect) {
+    var selectedCategory = categorySelect.value;
+    var row = categorySelect.closest('tr');
+    var productSelect = row.querySelector('.product');
+
+    // Очистите опции в select продуктов
+    productSelect.innerHTML = '<option value="" disabled selected>Оберіть продукт</option>';
+
+    // Фильтруйте продукты по категории и заполните опции в select продуктов
+    var filteredProducts = products.filter(product => product.category === selectedCategory);
+    filteredProducts.forEach(product => {
+      var option = document.createElement('option');
+      option.value = product.title;
+      option.dataset.price = product.price;
+      option.textContent = product.title;
+      productSelect.appendChild(option);
+    });
+
+    // Инициализируйте select продуктов
+    M.FormSelect.init(productSelect);
+  }
+</script>

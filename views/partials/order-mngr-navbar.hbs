@@ -1,0 +1,89 @@
+<nav class="blue darken-4 z-depth-3">
+  <div class="nav-wrapper">
+    <a href="/order-specifications" class="brand-logo left">
+      <img src="/images/logo.png" alt="Logo" class="logo">
+    </a>
+    <ul id="nav-mobile" class="right hide-on-med-and-down">
+      <li class="user-info">
+        <i class="material-icons left">account_circle</i>{{name}}, менеджер із замовлень
+      </li>
+
+      {{#if isOrders}}
+      <li class="active"><a class='dropdown-trigger' href="/client-orders-list"
+          data-target='dropdown-client-orders'>Замовлення</a></li>
+      <!-- Dropdown Structure -->
+      <ul id='dropdown-client-orders' class='dropdown-content'>
+        <li class="divider" tabindex="-1"></li>
+        <li><a href="/client-orders-list">Замовлення</a></li>
+        <li class="divider" tabindex="-1"></li>
+        <li><a href="/order-specifications">Специфікації</a></li>
+        <li class="divider" tabindex="-1"></li>
+        <li><a href="/place-order">Створити</a></li>
+      </ul>
+
+      {{else if isCreate}}
+      <li class="active"><a class='dropdown-trigger' href="/client-orders-list"
+          data-target='dropdown-client-orders'>Замовлення</a></li>
+      <!-- Dropdown Structure -->
+      <ul id='dropdown-client-orders' class='dropdown-content'>
+        <li class="divider" tabindex="-1"></li>
+        <li><a href="/client-orders-list">Замовлення</a></li>
+        <li class="divider" tabindex="-1"></li>
+        <li><a href="/order-specifications">Специфікації</a></li>
+        <li class="divider" tabindex="-1"></li>
+        <li><a href="/place-order">Створити</a></li>
+      </ul>
+
+      {{else}}
+      <li><a class='dropdown-trigger' href="/client-orders-list" data-target='dropdown-client-orders'>Замовлення</a>
+      </li>
+      <!-- Dropdown Structure -->
+      <ul id='dropdown-client-orders' class='dropdown-content'>
+        <li class="divider" tabindex="-1"></li>
+        <li><a href="/client-orders-list">Замовлення</a></li>
+        <li class="divider" tabindex="-1"></li>
+        <li><a href="/order-specifications">Специфікації</a></li>
+        <li class="divider" tabindex="-1"></li>
+        <li><a href="/place-order">Створити</a></li>
+      </ul>
+      {{/if}}
+
+      {{#if isProducts}}
+      <li class="active"><a href="/products">Продукти</a></li>
+      {{else}}
+      <li><a href="/products">Продукти</a></li>
+      {{/if}}
+
+      {{#if isReports}}
+      <li class="active"><a href="/sales-reports">Статистика</a></li>
+      {{else}}
+      <li><a href="/sales-reports">Статистика</a></li>
+      {{/if}}
+
+      {{#if isAuthenticated}}
+      <li><a href="/logout">Вийти</a></li>
+      {{/if}}
+
+
+    </ul>
+  </div>
+</nav>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var elems = document.querySelectorAll('.dropdown-trigger');
+    var instances = M.Dropdown.init(elems, {
+      coverTrigger: false,
+      hover: true,
+      inDuration: 500
+    });
+  });
+
+  // Инициализация pushpin
+  document.addEventListener('DOMContentLoaded', function () {
+    var elems = document.querySelector('nav');
+    var instances = M.Pushpin.init(elems, {
+      top: elems.offsetTop
+    });
+  });
+</script>

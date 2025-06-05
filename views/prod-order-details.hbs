@@ -1,0 +1,147 @@
+<div class="specification-header">
+  <h2>Замовлення</h2>
+  <p>Номер в базі: {{order._id}}</p>
+  <form action="#" id="postSpecificationForm">
+    <p class="specificationCheckboxes">
+      <label>
+        <input type="checkbox" id="isCompletedCheckbox" {{#if order.isCompleted}}checked {{/if}} disabled />
+        <span id="isCompletedLabel" class="{{#if order.isCompleted}}blue-text{{/if}}">{{#if order.isCompleted}}Виконано{{else}}Не виконано{{/if}}</span>
+      </label>
+    </p>
+  </form>
+</div>
+
+<div class="order-progress">
+  <ul class="progress-steps">
+    <li class="step" data-step="1">
+      <span class="step-number">1</span>
+      <span class="step-label">Прийнято</span>
+    </li>
+    <li class="step" data-step="2">
+      <span class="step-number">2</span>
+      <span class="step-label">У плануванні</span>
+    </li>
+    <li class="step" data-step="3">
+      <span class="step-number">3</span>
+      <span class="step-label">Виробляється</span>
+    </li>
+    <li class="step" data-step="4">
+      <span class="step-number">4</span>
+      <span class="step-label">Контроль якості</span>
+    </li>
+    <li class="step" data-step="5">
+      <span class="step-number">5</span>
+      <span class="step-label">Їде на склад</span>
+    </li>
+    <li class="step" data-step="6">
+      <span class="step-number">6</span>
+      <span class="step-label">На складі</span>
+    </li>
+  </ul>
+</div>
+
+<table class="specification-table">
+  <tr class="specification-table-header">
+    <th id="postedDateHeader"></th>
+    <th>Бажана дата доставки</th>
+    <th>Замовник</th>
+    <th>Продукція</th>
+    <th>Кількість (од.)</th>
+  </tr>
+  <tr>
+    <td id="postedDateCell"></td>
+    <td>{{order.date}}</td>
+    <td>{{order.customer}}</td>
+    <td>
+      <ul>
+        {{#each order.products}}
+        <li>{{this.title}}</li>
+        {{/each}}
+      </ul>
+    </td>
+    <td>
+      <ul>
+        {{#each order.products}}
+        <li>{{this.quantity}}</li>
+        {{/each}}
+      </ul>
+    </td>
+  </tr>
+</table>
+
+<script>
+  const orderId = '{{ order._id }}';
+  const isCompletedCheckbox = document.querySelector('#isCompletedCheckbox');
+  const isCompletedLabel = document.querySelector('#isCompletedLabel');
+  const formatDate = (date) => {
+    const options = {
+      year: 'numeric',
+      month: 'numeric',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+      second: 'numeric'
+    };
+    return new Date(date).toLocaleDateString('uk-UA', options);
+  };
+
+const updateProgressSteps = (orderStatus) => {
+  const steps = document.querySelectorAll('.step');
+  steps.forEach((step, index) => {
+    const stepNumber = index + 1;
+    if (stepNumber === orderStatus) {
+      step.classList.add('active');
+    } else if (stepNumber < orderStatus) {
+      step.classList.add('completed');
+    } else {
+      step.classList.remove('active', 'completed');
+    }
+  });
+};
+
+const updateOrderStatus = async (newStatus) => {
+  try {
+    const response = await fetch(`/update-order-status/${orderId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ orderStatus: newStatus }),
+    });
+
+    if (response.ok) {
+      M.toast({ html: 'Статус оновлено' });
+      updateProgressSteps(newStatus);
+    } else {
+      M.toast({ html: 'Помилка оновлення статусу' });
+    }
+  } catch (error) {
+    console.error(error);
+    M.toast({ html: 'Помилка оновлення статусу' });
+  }
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+  updateProgressSteps({{ order.orderStatus }});
+  const stepNumbers = document.querySelectorAll('.step-number');
+
+  // Проверяем, является ли заказ выполненным
+  const isOrderCompleted = isCompletedCheckbox.checked;
+
+  stepNumbers.forEach((stepNumber) => {
+    if (isOrderCompleted) {
+      // Если заказ выполнен, делаем статусы некликабельными
+      stepNumber.style.pointerEvents = 'none';
+      stepNumber.style.cursor = 'default';
+    } else {
+      // В противном случае, добавляем обработчик клика
+      stepNumber.addEventListener('click', () => {
+        const step = stepNumber.parentElement;
+        const newStatus = parseInt(step.dataset.step, 10);
+        updateOrderStatus(newStatus);
+      });
+    }
+  });
+});
+
+</script>

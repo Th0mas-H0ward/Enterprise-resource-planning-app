@@ -1,0 +1,106 @@
+<h2>Список замовлень</h2>
+{{#if orders.length}}
+<ul class="collection specifications">
+  {{#each orders}}
+  <a href="/prod-order/{{_id}}" style="text-decoration: none; color: inherit;">
+    <li class="collection-item avatar" onmouseover="showDeleteButton('{{_id}}')"
+      onmouseout="hideDeleteButton('{{_id}}')">
+      <i class="material-icons circle {{#if isCompleted}}green{{else}}red{{/if}}">description</i>
+      <span class="title">{{customer}}</span>
+      {{#if isPosted}}<p>Доставити до: {{date}}</p>{{/if}}
+
+      <div class="specificationCheckboxes">
+        {{#if isCompleted}}
+          <label>
+            <input type="checkbox" class="spec-completed-checkbox" data-order-id="{{_id}}" {{#if
+              isCompleted}}checked{{/if}} disabled />
+            <span class="spec-completed-label {{#if isCompleted}}blue-text{{/if}}">{{#if isCompleted}}Виконано{{else}}Не
+             виконано{{/if}}</span>
+          </label>
+        {{else}}
+          {{#if (eq orderStatus 6)}}
+          <label>
+            <input type="checkbox" class="special-status-checkbox" data-order-id="{{_id}}" checked disabled />
+            <span class="special-status-label blue-text">Перевіряється менеджером</span>
+          </label>
+          {{/if}}
+        {{/if}}
+      </div>
+
+      <a href="#" class="secondary-content delete-button" data-order-id="{{_id}}" onclick="deleteOrder(event)">
+        <i class="material-icons">delete</i>
+      </a>
+    </li>
+  </a>
+  {{/each}}
+</ul>
+{{else}}
+<p>Наразі немає жодного активного замовлення.</p>
+{{/if}}
+
+<div id="deleteModal" class="modal">
+  <div class="modal-content">
+    <h4>Підтвердження видалення</h4>
+    <p>Ви впевнені, що хочете видалити це замовлення зі списку (залишається в базі даних)?</p>
+  </div>
+  <div class="modal-footer">
+    <a href="#!" class="modal-close waves-effect waves-green btn-flat" id="cancelDelete">Скасувати</a>
+    <a href="#!" class="modal-close waves-effect waves-red btn-flat" id="confirmDelete">Видалити</a>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var modalElems = document.querySelectorAll('.modal');
+    var modalInstances = M.Modal.init(modalElems);
+  });
+
+  function showDeleteButton(orderId) {
+    const deleteButton = document.querySelector(`.delete-button[data-order-id="${orderId}"]`);
+    if (deleteButton) {
+      deleteButton.style.display = 'block';
+    }
+  }
+
+  function hideDeleteButton(orderId) {
+    const deleteButton = document.querySelector(`.delete-button[data-order-id="${orderId}"]`);
+    if (deleteButton) {
+      deleteButton.style.display = 'none';
+    }
+  }
+
+  async function deleteOrder(event) {
+    event.preventDefault();
+    const orderId = event.target.parentElement.dataset.orderId;
+    const modal = document.querySelector('#deleteModal');
+    const instance = M.Modal.getInstance(modal);
+    instance.open();
+    const confirmDelete = document.querySelector('#confirmDelete');
+    const cancelDelete = document.querySelector('#cancelDelete');
+
+    confirmDelete.addEventListener('click', async () => {
+      try {
+        const response = await fetch(`/order/${orderId}`, { method: 'DELETE' });
+        const data = await response.json();
+        M.toast({ html: data.message });
+        const listItem = event.target.closest('.collection-item');
+        if (listItem) {
+          listItem.remove();
+        } else {
+          console.error('Не удалось найти элемент списка для удаления');
+        }
+      } catch (error) {
+        console.error('Ошибка при удалении спецификации:', error);
+        alert('Ошибка при удалении спецификации');
+      } finally {
+        instance.close();
+      }
+    });
+  }
+</script>
+
+<style>
+  .delete-button {
+    display: none;
+  }
+</style>

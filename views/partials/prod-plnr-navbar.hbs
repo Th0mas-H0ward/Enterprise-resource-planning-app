@@ -1,0 +1,41 @@
+<nav class="blue darken-4 z-depth-3">
+  <div class="nav-wrapper">
+    <a href="/prod-orders-list" class="brand-logo left">
+      <img src="/images/logo.png" alt="Logo" class="logo">
+    </a>
+    <ul id="nav-mobile" class="right hide-on-med-and-down">
+      <li class="user-info">
+        <i class="material-icons left">account_circle</i>{{name}}, планувальник виробництва
+      </li>
+
+      {{#if isOrders}}
+      <li class="active"><a href="/prod-orders-list">Замовлення</a></li>
+      {{else}}
+      <li><a href="/prod-orders-list">Замовлення</a></li>
+      {{/if}}
+
+      {{#if isProducts}}
+      <li class="active"><a href="/">Матераіли</a></li>
+      {{else}}
+      <li><a href="/">Матераіли</a></li>
+      {{/if}}
+
+      {{#if isAuthenticated}}
+      <li><a href="/logout">Вийти</a></li>
+      {{/if}}
+
+    </ul>
+  </div>
+</nav>
+
+<script>
+
+
+  // Инициализация pushpin
+  document.addEventListener('DOMContentLoaded', function () {
+    var elems = document.querySelector('nav');
+    var instances = M.Pushpin.init(elems, {
+      top: elems.offsetTop
+    });
+  });
+</script>

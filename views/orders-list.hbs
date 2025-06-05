@@ -1,0 +1,137 @@
+<h2>Список заявок</h2>
+{{#if specifications.length}}
+<table class="orders">
+  <tr class="orders-header">
+    <td>
+      <div class="input-field">
+        <input placeholder="Введіть постачальника" id="provider_search" type="text" class="validate">
+        <label for="provider_search" style="display: flex; align-items: center;">Постачальник <i
+            class="material-icons">search</i></label>
+      </div>
+    </td>
+    <td>
+      <div class="input-field">
+        <input type="text" id="date" name="postedDate" class="datepicker" autocomplete="off">
+        <label>Дата подання заявки</label>
+      </div>
+    </td>
+    <td>
+      <div class="input-field">
+        <select id="deliveryDateSort">
+          <option value="all" selected>Всі</option>
+          <option value="newer">Поточні</option>
+          <option value="older">Прострочені</option>
+        </select>
+        <label>Бажана дата доставки</label>
+      </div>
+    </td>
+    <td>
+      <div class="input-field">
+        <select id="completedSort">
+          <option value="all" selected>Всі</option>
+          <option value="completed">Виконано</option>
+          <option value="notCompleted">Не виконано</option>
+        </select>
+        <label>Статус</label>
+      </div>
+    </td>
+  </tr>
+  {{#each specifications}}
+  <tr data-id="{{_id}}" class="orderRow" data-provider="{{provider}}" data-posteddate="{{formatDate postedDate}}">
+    <td>{{provider}}</td>
+    <td>{{formatDate postedDate}}</td>
+    <td>{{date}}</td>
+    <td>{{#if isCompleted}}Виконано{{else}}Не виконано{{/if}}</td>
+  </tr>
+  {{/each}}
+</table>
+{{else}}
+<p>У базі не зареєстровано жодного замовлення.</p>
+{{/if}}
+
+<script>
+ document.addEventListener('DOMContentLoaded', function () {
+  var elems = document.querySelectorAll('select');
+  var instances = M.FormSelect.init(elems);
+  var datepicker = document.querySelectorAll('.datepicker');
+  M.Datepicker.init(datepicker, {
+    format: 'dd.mm.yyyy',
+    showClearBtn: true,
+    i18n: {
+      cancel: 'Відміна',
+      clear: 'Очистити',
+      done: 'Готово',
+      months: ["Січень", "Лютий", "Березень", "Квітень", "Травень", "Червень", "Липень", "Серпень", "Вересень", "Жовтень", "Листопад", "Грудень"],
+      monthsShort: ["Січ", "Лют", "Бер", "Квт", "Трав", "Чера", "Лип", "Сер", "Вер", "Жов", "Лис", "Груд"],
+      weekdays: ["Неділя", "Понеділок", "Вівторок", "Середа", "Четвер", "П'ятниця", "Субота"],
+      weekdaysShort: ["Нд", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"],
+      weekdaysAbbrev: ["Н", "П", "В", "С", "Ч", "П", "С"]
+    }
+  });
+
+  const providerSearchInput = document.getElementById('provider_search');
+  const datepickerInput = document.getElementById('date');
+  const deliveryDateSort = document.getElementById('deliveryDateSort');
+  const completedSort = document.getElementById('completedSort');
+  const orderRows = document.querySelectorAll('.orderRow');
+
+  function applyFilters() {
+    const selectedProvider = providerSearchInput.value.toLowerCase();
+    const selectedDate = datepickerInput.value;
+    const selectedDeliveryDateSort = deliveryDateSort.value;
+    const selectedCompletedSort = completedSort.value;
+
+    orderRows.forEach(row => {
+      const provider = row.dataset.provider.toLowerCase();
+      const postedDate = row.dataset.posteddate;
+      const deliveryDate = new Date(row.children[2].textContent.trim().split('.').reverse().join('-'));
+      const isCompleted = row.lastElementChild.textContent.trim() === 'Виконано';
+      const currentDate = new Date();
+
+      let shouldDisplay = true;
+
+      // Фильтр по поставщику
+      if (selectedProvider && !provider.includes(selectedProvider)) {
+        shouldDisplay = false;
+      }
+
+      // Фильтр по дате подачи заявки
+      if (selectedDate && postedDate !== selectedDate) {
+        shouldDisplay = false;
+      }
+
+      // Фильтр по бажаной дате доставки
+      if (selectedDeliveryDateSort === 'newer' && deliveryDate < currentDate) {
+        shouldDisplay = false;
+      } else if (selectedDeliveryDateSort === 'older' && deliveryDate >= currentDate) {
+        shouldDisplay = false;
+      }
+
+      // Фильтр по статусу
+      if (selectedCompletedSort === 'completed' && !isCompleted) {
+        shouldDisplay = false;
+      } else if (selectedCompletedSort === 'notCompleted' && isCompleted) {
+        shouldDisplay = false;
+      }
+
+      if (shouldDisplay) {
+        row.style.display = '';
+      } else {
+        row.style.display = 'none';
+      }
+    });
+  }
+
+  providerSearchInput.addEventListener('input', applyFilters);
+  datepickerInput.addEventListener('change', applyFilters);
+  deliveryDateSort.addEventListener('change', applyFilters);
+  completedSort.addEventListener('change', applyFilters);
+
+  orderRows.forEach(row => {
+    row.addEventListener('click', () => {
+      const specificationId = row.dataset.id;
+      window.location.href = `/specification/${specificationId}`;
+    });
+  });
+});
+</script>

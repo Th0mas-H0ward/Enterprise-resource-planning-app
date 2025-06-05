@@ -1,0 +1,455 @@
+<h2>Склад</h2>
+{{#if materials.length}}
+<table class="materials">
+  <tr class="materials-header">
+    <td>
+      <div class="input-field">
+        <select id="categorySelect">
+          <option value="all" selected>Всі категорії</option>
+          {{#each uniqueCategories}}
+          <option value="{{this}}">{{this}}</option>
+          {{/each}}
+        </select>
+        <label>Категорія</label>
+      </div>
+    </td>
+    <td>
+      <div class="input-field">
+        <input placeholder="Введіть назву матеріалу" id="material_search" type="text" class="validate">
+        <label for="material_search" style="display: flex; align-items: center;">Матеріал <i
+            class="material-icons">search</i></label>
+      </div>
+
+    </td>
+    <td>
+      <div class="input-field">
+        <select id="quantitySort">
+          <option value="asc" selected>За зростанням</option>
+          <option value="desc">За спаданням</option>
+        </select>
+        <label>Кількість (шт.)</label>
+      </div>
+    </td>
+  </tr>
+  {{#each materials}}
+  <tr data-id="{{_id}}" class="materialRow" data-category="{{category}}">
+    <td class="editable editing">{{category}}</td>
+    <td class="editable editing">{{title}}</td>
+    <td class="editable editing">{{quantity}}</td>
+    <td><a href="#" class="delete-row-btn" hidden><i class="material-icons">delete</i></a></td>
+  </tr>
+  {{/each}}
+
+</table>
+{{else}}
+<p>На складі не зареєстровано жодної позиції.</p>
+<table class="materials">
+  <tr class="materials-header">
+    <td>
+      <div class="input-field">
+        <select id="categorySelect">
+          <option value="all" selected>Всі категорії</option>
+          {{#each uniqueCategories}}
+          <option value="{{this}}">{{this}}</option>
+          {{/each}}
+        </select>
+        <label>Категорія</label>
+      </div>
+    </td>
+    <td>
+      <div class="input-field">
+        <input placeholder="Введіть назву матеріалу" id="material_search" type="text" class="validate">
+        <label for="material_search" style="display: flex; align-items: center;">Матеріал <i
+            class="material-icons">search</i></label>
+      </div>
+
+    </td>
+    <td>
+      <div class="input-field">
+        <select id="quantitySort">
+          <option value="asc" selected>За зростанням</option>
+          <option value="desc">За спаданням</option>
+        </select>
+        <label>Кількість (шт.)</label>
+      </div>
+    </td>
+  </tr>
+</table>
+{{/if}}
+
+{{#if isManager}}
+<div class="fixed-action-btn">
+  <a class="btn-floating btn-large blue edit-button">
+    <i class="large material-icons">mode_edit</i>
+  </a>
+  <ul>
+    <li><a class="delete-button btn-floating red disabled"><i class="material-icons">delete</i></a></li>
+    <li><a class="save-button btn-floating green disabled"><i class="material-icons">save</i></a></li>
+    <li><a class="add-button btn-floating purple disabled"><i class="material-icons">add</i></a></li>
+  </ul>
+</div>
+{{/if}}
+
+<!-- Modal Structure -->
+<div id="deleteModal" class="modal">
+  <div class="modal-content">
+    <h4>Підтвердження видалення</h4>
+    <p>Ви впевнені, що хочете видалити цей матеріал?</p>
+  </div>
+  <div class="modal-footer">
+    <a href="#!" class="modal-close waves-effect waves-green btn-flat" id="cancelDelete">Скасувати</a>
+    <a href="#!" class="modal-close waves-effect waves-red btn-flat" id="confirmDelete">Видалити</a>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var elems = document.querySelectorAll('select');
+    var instances = M.FormSelect.init(elems);
+
+    var categorySelect = document.getElementById('categorySelect');
+    categorySelect.addEventListener('change', function () {
+      filterMaterials();
+    });
+
+    var quantitySort = document.getElementById('quantitySort');
+    quantitySort.addEventListener('change', function () {
+      sortMaterials();
+    });
+
+    var materialSearchInput = document.getElementById('material_search');
+    materialSearchInput.addEventListener('input', function () {
+      filterMaterials();
+    });
+
+    sortMaterials();
+
+    function filterMaterials() {
+      var selectedCategory = categorySelect.value;
+      var searchText = materialSearchInput.value.toLowerCase();
+      var materialRows = document.querySelectorAll('.materialRow');
+
+      materialRows.forEach(function (row) {
+        var category = row.getAttribute('data-category');
+        var material = row.children[1].textContent.toLowerCase(); // Назва матеріалу
+
+        if ((selectedCategory === 'all' || category === selectedCategory) &&
+          (material.includes(searchText))) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    }
+
+    function sortMaterials() {
+      if (isEditing) return; // Не сортировать в режиме редактирования
+
+      var sortDirection = quantitySort.value;
+      var materialRows = document.querySelectorAll('.materialRow');
+
+      var sortedRows = Array.from(materialRows).sort(function (a, b) {
+        var quantityA = parseInt(a.children[2].textContent);
+        var quantityB = parseInt(b.children[2].textContent);
+
+        if (sortDirection === 'asc') {
+          return quantityA - quantityB;
+        } else {
+          return quantityB - quantityA;
+        }
+      });
+
+      var materialsTable = document.querySelector('.materials');
+      sortedRows.forEach(function (row) {
+        materialsTable.appendChild(row);
+      });
+    }
+  });
+
+  document.addEventListener('DOMContentLoaded', function () {
+    var elems = document.querySelectorAll('.fixed-action-btn');
+    var instances = M.FloatingActionButton.init(elems, {
+      direction: 'left',
+      hoverEnabled: true
+    });
+
+    // Инициализация модального окна
+    var modalElems = document.querySelectorAll('.modal');
+    var modalInstances = M.Modal.init(modalElems);
+  });
+
+  const editButton = document.querySelector('.edit-button');
+  let isEditing = false;
+
+  editButton.addEventListener('click', toggleEditMode);
+
+  function toggleEditMode() {
+    isEditing = !isEditing;
+
+    const editIcon = editButton.querySelector('i');
+    editIcon.textContent = isEditing ? 'edit_off' : 'mode_edit';
+
+    const saveButton = document.querySelector('.save-button');
+    saveButton.classList.toggle('disabled', !isEditing);
+    const deleteButton = document.querySelector('.delete-button');
+    deleteButton.classList.toggle('disabled', !isEditing);
+    const addButton = document.querySelector('.add-button');
+    addButton.classList.toggle('disabled', !isEditing);
+
+    const editableCells = document.querySelectorAll('.editable');
+    editableCells.forEach((cell) => {
+      if (isEditing) {
+        const originalText = cell.textContent;
+        cell.setAttribute('data-original', originalText);
+        const input = document.createElement('input');
+        input.value = originalText;
+        cell.textContent = '';
+        cell.appendChild(input);
+      } else {
+        const originalText = cell.getAttribute('data-original');
+        cell.removeChild(cell.firstChild);
+        cell.textContent = originalText || ''; // Если нет оригинального текста, оставляем пустым
+
+        // Удаляем строки без идентификатора материала (новые строки)
+        const row = cell.parentNode;
+        const materialId = row.getAttribute('data-id');
+        if (!materialId) {
+          row.remove();
+        }
+      }
+    });
+  }
+
+  const saveButton = document.querySelector('.save-button');
+
+  saveButton.addEventListener('click', async () => {
+    if (!isEditing) return;
+
+    const editedRows = document.querySelectorAll('.materialRow');
+    const updatedMaterials = [];
+    const newMaterials = [];
+
+    editedRows.forEach((row) => {
+      const id = row.getAttribute('data-id');
+      const category = row.children[0].firstChild.value;
+      const title = row.children[1].firstChild.value;
+      const quantity = parseInt(row.children[2].firstChild.value);
+
+      if (id) {
+        updatedMaterials.push({ id, category, title, quantity });
+      } else {
+        newMaterials.push({ category, title, quantity });
+      }
+    });
+
+    try {
+      const promises = updatedMaterials.map(async (material) => {
+        await fetch(`/material/${material.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ title: material.title, category: material.category, quantity: material.quantity }),
+        });
+      });
+
+      const newMaterialResponses = await Promise.all(
+        newMaterials.map(async (material) => {
+          const response = await fetch('/api/materials', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ title: material.title, category: material.category, quantity: material.quantity }),
+          });
+          return response.json();
+        })
+      );
+
+      await Promise.all(promises);
+
+      // Обновить данные в таблице после успешного обновления/добавления материалов на сервере
+      updateTable();
+
+      // Добавить новые материалы в таблицу
+      newMaterialResponses.forEach((newMaterial) => {
+        const materialsTable = document.querySelector('.materials');
+        const newRow = document.createElement('tr');
+        newRow.classList.add('materialRow');
+        newRow.setAttribute('data-id', newMaterial._id);
+        newRow.innerHTML = `
+        <td class="editable">${newMaterial.category}</td>
+        <td class="editable">${newMaterial.title}</td>
+        <td class="editable">${newMaterial.quantity}</td>
+        <td><a href="#" class="delete-row-btn" hidden><i class="material-icons">delete</i></a></td>
+      `;
+        materialsTable.appendChild(newRow);
+
+        // Обновляем кнопки удаления для новых материалов
+        const deleteRowButton = newRow.querySelector('.delete-row-btn');
+        deleteRowButton.style.display = isDeleteMode ? 'inline-block' : 'none';
+        deleteRowButton.addEventListener('click', async (event) => {
+          event.preventDefault();
+          const row = event.target.closest('tr');
+          const materialId = row.getAttribute('data-id');
+
+          const modal = document.querySelector('#deleteModal');
+          const instance = M.Modal.getInstance(modal);
+          instance.open();
+
+          // Обработка подтверждения или отмены удаления
+          const confirmDelete = document.querySelector('#confirmDelete');
+          const cancelDelete = document.querySelector('#cancelDelete');
+
+          confirmDelete.addEventListener('click', async () => {
+            try {
+              await fetch(`/api/materials/${materialId}`, {
+                method: 'DELETE',
+              });
+
+              row.remove();
+              M.Toast.dismissAll();
+              M.toast({ html: 'Матеріал успішно видалено' });
+            } catch (error) {
+              console.error('Помилка при видаленні матеріала:', error);
+              M.Toast.dismissAll();
+              M.toast({ html: 'Виникла помилка при видаленні матеріала' });
+            } finally {
+              instance.close();
+            }
+          });
+          cancelDelete.addEventListener('click', () => {
+            instance.close();
+          });
+        });
+      });
+
+      M.toast({ html: 'Матеріали успішно оновлено' });
+      toggleEditMode(); // Выйти из режима редактирования после успешного обновления
+    } catch (error) {
+      console.error('Помилка при оновленні/додаванні матеріалів:', error);
+    }
+  });
+
+  function updateTable() {
+    fetch('/api/materials')
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Помилка під час отримання даних');
+        }
+        return response.json();
+      })
+      .then(data => {
+        const materialRows = document.querySelectorAll('.materialRow');
+        materialRows.forEach((row, index) => {
+          const material = data[index];
+          if (material) {
+            row.children[0].textContent = material.category;
+            row.children[1].textContent = material.title;
+            row.children[2].textContent = material.quantity;
+          }
+        });
+      })
+      .catch(error => console.error(error));
+  }
+
+  const deleteButton = document.querySelector('.delete-button');
+  let isDeleteMode = false;
+
+  deleteButton.addEventListener('click', toggleDeleteMode);
+
+  function toggleDeleteMode() {
+    isDeleteMode = !isDeleteMode;
+
+    const deleteIcon = deleteButton.querySelector('i');
+    deleteIcon.textContent = isDeleteMode ? 'close' : 'delete';
+
+    const deleteRowButtons = document.querySelectorAll('.delete-row-btn');
+    deleteRowButtons.forEach(button => {
+      button.style.display = isDeleteMode ? 'inline-block' : 'none';
+    });
+
+    const materialRows = document.querySelectorAll('.materialRow');
+    materialRows.forEach(row => {
+      const deleteButton = row.querySelector('.delete-row-btn');
+      if (!deleteButton) {
+        const newDeleteButton = document.createElement('a');
+        newDeleteButton.href = '#';
+        newDeleteButton.classList.add('delete-row-btn');
+        newDeleteButton.style.display = isDeleteMode ? 'inline-block' : 'none';
+        newDeleteButton.innerHTML = '<i class="material-icons">delete</i>';
+        row.querySelector('td:last-child').appendChild(newDeleteButton);
+      }
+    });
+  }
+
+  document.querySelectorAll('.delete-row-btn').forEach(button => {
+    button.addEventListener('click', async (event) => {
+      event.preventDefault();
+      const row = event.target.closest('tr');
+      const materialId = row.getAttribute('data-id');
+
+      // Откройте модальное окно
+      const modal = document.querySelector('#deleteModal');
+      const instance = M.Modal.getInstance(modal);
+      instance.open();
+
+      // Обработка подтверждения или отмены удаления
+      const confirmDelete = document.querySelector('#confirmDelete');
+      const cancelDelete = document.querySelector('#cancelDelete');
+
+      confirmDelete.addEventListener('click', async () => {
+        try {
+          await fetch(`/api/materials/${materialId}`, {
+            method: 'DELETE',
+          });
+
+          row.remove();
+          M.Toast.dismissAll();
+          M.toast({ html: 'Матеріал успішно видалено' });
+        } catch (error) {
+          console.error('Помилка при видаленні матеріала:', error);
+          M.Toast.dismissAll();
+          M.toast({ html: 'Виникла помилка при видаленні матеріала' });
+        } finally {
+          instance.close();
+        }
+      });
+
+      cancelDelete.addEventListener('click', () => {
+        instance.close();
+      });
+    });
+  });
+
+  const addButton = document.querySelector('.add-button');
+
+  addButton.addEventListener('click', () => {
+    if (!isEditing) {
+      toggleEditMode(); // Включаем режим редактирования, если он еще не включен
+    }
+    addNewRow();
+  });
+
+    function addNewRow() {
+    var materialsTable = document.querySelector('.materials');
+    
+    if (materialsTable.querySelectorAll('tr').length === 1) {
+      const noMaterialsMessage = document.querySelector('p');
+      if (noMaterialsMessage) {
+        noMaterialsMessage.remove();
+      }
+    }
+
+    const newRow = document.createElement('tr');
+    newRow.classList.add('materialRow');
+    newRow.innerHTML = `
+    <td class="editable editing"><input type="text" placeholder="Категорія"></td>
+    <td class="editable editing"><input type="text" placeholder="Назва матеріалу"></td>
+    <td class="editable editing"><input type="number" placeholder="Кількість"></td>
+    <td></td>
+    `;
+    materialsTable.appendChild(newRow);
+  }
+
+</script>

@@ -1,0 +1,139 @@
+<nav class="blue darken-4 z-depth-3">
+  <div class="nav-wrapper">
+    <a href="/" class="brand-logo left">
+      <img src="/images/logo.png" alt="Logo" class="logo">
+    </a>
+    <ul id="nav-mobile" class="right hide-on-med-and-down">
+
+      <li class="user-info">
+        <i class="material-icons left">account_circle</i>{{name}}, менеджер із закупівель
+      </li>
+      {{#if isIndex}}
+      <li class="active"><a href="/">Склад</a></li>
+      {{else}}
+      <li><a href="/">Склад</a></li>
+      {{/if}}
+
+      {{#if isCreate}}
+      <li class="active"><a class='dropdown-trigger' href="/providers"
+          data-target='dropdown-providers'>Постачальники</a></li>
+      <!-- Dropdown Structure -->
+      <ul id='dropdown-providers' class='dropdown-content'>
+        <li><a href="/create-provider">Додати</a></li>
+        <li class="divider" tabindex="-1"></li>
+        <li><a href="/providers">Постачальники</a></li>
+      </ul>
+
+      {{else if isProviders}}
+      <li class="active"><a class='dropdown-trigger' href="/providers"
+          data-target='dropdown-providers'>Постачальники</a></li>
+      <!-- Dropdown Structure -->
+      <ul id='dropdown-providers' class='dropdown-content'>
+        <li><a href="/create-provider">Додати</a></li>
+        <li class="divider" tabindex="-1"></li>
+        <li><a href="/providers">Постачальники</a></li>
+      </ul>
+
+      {{else}}
+      <li><a class='dropdown-trigger' href="/providers" data-target='dropdown-providers'>Постачальники</a></li>
+      <!-- Dropdown Structure -->
+      <ul id='dropdown-providers' class='dropdown-content'>
+        <li><a href="/create-provider">Додати</a></li>
+        <li class="divider" tabindex="-1"></li>
+        <li><a href="/providers">Постачальники</a></li>
+      </ul>
+      {{/if}}
+
+      {{#if isOrder}}
+      <li class="active"><a class='dropdown-trigger' href='/order' data-target='dropdown-orders'>Замовлення</a></li>
+      <!-- Dropdown Structure -->
+      <ul id='dropdown-orders' class='dropdown-content'>
+        <li><a href="/order">Замовити</a></li>
+        <li class="divider" tabindex="-1"></li>
+        <li><a href="/specifications">Специфікації</a></li>
+      </ul>
+
+      {{else if isSpecifications}}
+      <li class="active"><a class='dropdown-trigger' href='/order' data-target='dropdown-orders'>Замовлення</a></li>
+
+      <ul id='dropdown-orders' class='dropdown-content'>
+        <li><a href="/order">Замовити</a></li>
+        <li class="divider" tabindex="-1"></li>
+        <li><a href="/specifications">Специфікації</a></li>
+      </ul>
+
+      {{else if isSpecificationDetails}}
+      <li class="active"><a class='dropdown-trigger' href='/order' data-target='dropdown-orders'>Замовлення</a></li>
+
+      <ul id='dropdown-orders' class='dropdown-content'>
+        <li><a href="/order">Замовити</a></li>
+        <li class="divider" tabindex="-1"></li>
+        <li><a href="/specifications">Специфікації</a></li>
+      </ul>
+
+      {{else}}
+      <li><a class='dropdown-trigger' href='/order' data-target='dropdown-orders'>Замовлення</a></li>
+      <ul id='dropdown-orders' class='dropdown-content'>
+        <li><a href="/order">Замовити</a></li>
+        <li class="divider" tabindex="-1"></li>
+        <li><a href="/specifications">Специфікації</a></li>
+      </ul>
+      {{/if}}
+
+      {{#if isOrders}}
+      <li class="active"><a class='dropdown-trigger' href='/orders-list' data-target='dropdown-reports'>Статистика</a>
+      </li>
+      <!-- Dropdown Structure -->
+      <ul id='dropdown-reports' class='dropdown-content'>
+        <li><a href="/orders-list">Закупівлі</a></li>
+        <li class="divider" tabindex="-1"></li>
+        <li><a href="/reports">Звітність</a></li>
+      </ul>
+
+      {{else if isReports}}
+      <li class="active"><a class='dropdown-trigger' href='/orders-list' data-target='dropdown-reports'>Статистика</a>
+      </li>
+
+      <ul id='dropdown-reports' class='dropdown-content'>
+        <li><a href="/orders-list">Закупівлі</a></li>
+        <li class="divider" tabindex="-1"></li>
+        <li><a href="/reports">Звітність</a></li>
+      </ul>
+
+      {{else}}
+      <li><a class='dropdown-trigger' href='/orders-list' data-target='dropdown-reports'>Статистика</a>
+      </li>
+      <!-- Dropdown Structure -->
+      <ul id='dropdown-reports' class='dropdown-content'>
+        <li><a href="/orders-list">Закупівлі</a></li>
+        <li class="divider" tabindex="-1"></li>
+        <li><a href="/reports">Звітність</a></li>
+      </ul>
+      {{/if}}
+
+      {{#if isAuthenticated}}
+      <li><a href="/logout">Вийти</a></li>
+      {{/if}}
+
+    </ul>
+  </div>
+</nav>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var elems = document.querySelectorAll('.dropdown-trigger');
+    var instances = M.Dropdown.init(elems, {
+      coverTrigger: false,
+      hover: true,
+      inDuration: 500
+    });
+  });
+
+  // Инициализация pushpin
+  document.addEventListener('DOMContentLoaded', function () {
+    var elems = document.querySelector('nav');
+    var instances = M.Pushpin.init(elems, {
+      top: elems.offsetTop
+    });
+  });
+</script>

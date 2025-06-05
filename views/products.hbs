@@ -1,0 +1,454 @@
+<h2>Продукція</h2>
+{{#if products.length}}
+<table class="products">
+  <tr class="products-header">
+    <td>
+      <div class="input-field">
+        <select id="categorySelect">
+          <option value="all" selected>Всі категорії</option>
+          {{#each uniqueCategories}}
+          <option value="{{this}}">{{this}}</option>
+          {{/each}}
+        </select>
+        <label>Категорія</label>
+      </div>
+    </td>
+    <td>
+      <div class="input-field">
+        <input placeholder="Введіть назву продукту" id="product_search" type="text" class="validate">
+        <label for="product_search" style="display: flex; align-items: center;">Продукт <i
+            class="material-icons">search</i></label>
+      </div>
+    </td>
+    <td>
+      <div class="input-field">
+        <select id="priceSort">
+          <option value="asc">За зростанням</option>
+          <option value="desc" selected>За спаданням</option>
+        </select>
+        <label>Ціна (грн.)</label>
+      </div>
+    </td>
+  </tr>
+  {{#each products}}
+  <tr data-id="{{_id}}" class="productRow" data-category="{{category}}">
+    <td class="editable editing">{{category}}</td>
+    <td class="editable editing">{{title}}</td>
+    <td class="editable editing">{{price}}</td>
+    <td><a href="#" class="delete-row-btn" hidden><i class="material-icons">delete</i></a></td>
+  </tr>
+  {{/each}}
+</table>
+{{else}}
+<p>На складі не зареєстровано жодної позиції.</p>
+<!-- Add an empty table to insert new rows when there are no existing products -->
+<table class="products">
+  <tr class="products-header">
+    <td>
+      <div class="input-field">
+        <select id="categorySelect">
+          <option value="all" selected>Всі категорії</option>
+          {{#each uniqueCategories}}
+          <option value="{{this}}">{{this}}</option>
+          {{/each}}
+        </select>
+        <label>Категорія</label>
+      </div>
+    </td>
+    <td>
+      <div class="input-field">
+        <input placeholder="Введіть назву продукту" id="product_search" type="text" class="validate">
+        <label for="product_search" style="display: flex; align-items: center;">Продукт <i
+            class="material-icons">search</i></label>
+      </div>
+    </td>
+    <td>
+      <div class="input-field">
+        <select id="priceSort">
+          <option value="asc">За зростанням</option>
+          <option value="desc" selected>За спаданням</option>
+        </select>
+        <label>Ціна (грн.)</label>
+      </div>
+    </td>
+  </tr>
+</table>
+{{/if}}
+
+<div class="fixed-action-btn">
+  <a class="btn-floating btn-large blue edit-button">
+    <i class="large material-icons">mode_edit</i>
+  </a>
+  <ul>
+    <li><a class="delete-button btn-floating red disabled"><i class="material-icons">delete</i></a></li>
+    <li><a class="save-button btn-floating green disabled"><i class="material-icons">save</i></a></li>
+    <li><a class="add-button btn-floating purple disabled"><i class="material-icons">add</i></a></li>
+
+  </ul>
+</div>
+
+<!-- Modal Structure -->
+<div id="deleteModal" class="modal">
+  <div class="modal-content">
+    <h4>Підтвердження видалення</h4>
+    <p>Ви впевнені, що хочете видалити цей продукт?</p>
+  </div>
+  <div class="modal-footer">
+    <a href="#!" class="modal-close waves-effect waves-green btn-flat" id="cancelDelete">Скасувати</a>
+    <a href="#!" class="modal-close waves-effect waves-red btn-flat" id="confirmDelete">Видалити</a>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var elems = document.querySelectorAll('select');
+    var instances = M.FormSelect.init(elems);
+
+    var categorySelect = document.getElementById('categorySelect');
+    categorySelect.addEventListener('change', function () {
+      filterProducts();
+    });
+
+
+    var priceSort = document.getElementById('priceSort');
+    priceSort.addEventListener('change', function () {
+      sortByPrice();
+    });
+
+    var productSearchInput = document.getElementById('product_search');
+    productSearchInput.addEventListener('input', function () {
+      filterProducts();
+    });
+
+
+    function filterProducts() {
+      var selectedCategory = categorySelect.value;
+      var searchText = productSearchInput.value.toLowerCase();
+      var productRows = document.querySelectorAll('.productRow');
+
+      productRows.forEach(function (row) {
+        var category = row.getAttribute('data-category');
+        var product = row.children[1].textContent.toLowerCase(); // Назва матеріалу
+
+        if ((selectedCategory === 'all' || category === selectedCategory) &&
+          (product.includes(searchText))) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    }
+      });
+
+    function sortByPrice() {
+      if (isEditing) return; // Не сортировать в режиме редактирования
+
+      var sortDirection = priceSort.value;
+      var productRows = document.querySelectorAll('.productRow');
+
+      var sortedRows = Array.from(productRows).sort(function (a, b) {
+        var priceA = parseFloat(a.children[2].textContent);
+        var priceB = parseFloat(b.children[2].textContent);
+
+        if (sortDirection === 'asc') {
+          return priceA - priceB;
+        } else {
+          return priceB - priceA;
+        }
+      });
+
+      var productsTable = document.querySelector('.products');
+      sortedRows.forEach(function (row) {
+        productsTable.appendChild(row);
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      var elems = document.querySelectorAll('.fixed-action-btn');
+      var instances = M.FloatingActionButton.init(elems, {
+        direction: 'left',
+        hoverEnabled: true
+      });
+
+      // Инициализация модального окна
+      var modalElems = document.querySelectorAll('.modal');
+      var modalInstances = M.Modal.init(modalElems);
+    });
+
+    const editButton = document.querySelector('.edit-button');
+    let isEditing = false;
+
+    editButton.addEventListener('click', toggleEditMode);
+
+    function toggleEditMode() {
+      isEditing = !isEditing;
+
+      const editIcon = editButton.querySelector('i');
+      editIcon.textContent = isEditing ? 'edit_off' : 'mode_edit';
+
+      const saveButton = document.querySelector('.save-button');
+      saveButton.classList.toggle('disabled', !isEditing);
+      const deleteButton = document.querySelector('.delete-button');
+      deleteButton.classList.toggle('disabled', !isEditing);
+      const addButton = document.querySelector('.add-button');
+      addButton.classList.toggle('disabled', !isEditing);
+
+      const editableCells = document.querySelectorAll('.editable');
+      editableCells.forEach((cell) => {
+        if (isEditing) {
+          const originalText = cell.textContent;
+          cell.setAttribute('data-original', originalText);
+          const input = document.createElement('input');
+          input.value = originalText;
+          cell.textContent = '';
+          cell.appendChild(input);
+        } else {
+          const originalText = cell.getAttribute('data-original');
+          cell.removeChild(cell.firstChild);
+          cell.textContent = originalText || ''; // Если нет оригинального текста, оставляем пустым
+
+          // Удаляем строки без идентификатора материала (новые строки)
+          const row = cell.parentNode;
+          const materialId = row.getAttribute('data-id');
+          if (!materialId) {
+            row.remove();
+          }
+        }
+      });
+    }
+
+    const saveButton = document.querySelector('.save-button');
+
+    saveButton.addEventListener('click', async () => {
+      if (!isEditing) return;
+
+      const editedRows = document.querySelectorAll('.productRow');
+      const updatedProducts = [];
+      const newProducts = [];
+
+      editedRows.forEach((row) => {
+        const id = row.getAttribute('data-id');
+        const category = row.children[0].firstChild.value;
+        const title = row.children[1].firstChild.value;
+        const price = parseFloat(row.children[2].firstChild.value);
+
+        if (id) {
+          updatedProducts.push({ id, category, title, price });
+        } else {
+          newProducts.push({ category, title, price });
+        }
+      });
+
+      try {
+        const promises = updatedProducts.map(async (product) => {
+          await fetch(`/products/${product.id}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ title: product.title, category: product.category, price: product.price }),
+          });
+        });
+
+        const newProductResponses = await Promise.all(
+          newProducts.map(async (product) => {
+            const response = await fetch('/api/products', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ title: product.title, category: product.category, price: product.price }),
+            });
+            return response.json();
+          })
+        );
+
+        await Promise.all(promises);
+
+        // Добавить новые материалы в таблицу
+        newProductResponses.forEach((newProduct) => {
+          const productsTable = document.querySelector('.products');
+          const newRow = document.createElement('tr');
+          newRow.classList.add('productRow');
+          newRow.setAttribute('data-id', newProduct._id);
+          newRow.innerHTML = `
+        <td class="editable">${newProduct.category}</td>
+        <td class="editable">${newProduct.title}</td>
+        <td class="editable">${newProduct.price}</td>
+        <td><a href="#" class="delete-row-btn" hidden><i class="material-icons">delete</i></a></td>
+      `;
+          productsTable.appendChild(newRow);
+
+          // Обновляем кнопки удаления для новых материалов
+          const deleteRowButton = newRow.querySelector('.delete-row-btn');
+          deleteRowButton.style.display = isDeleteMode ? 'inline-block' : 'none';
+          deleteRowButton.addEventListener('click', async (event) => {
+            event.preventDefault();
+            const row = event.target.closest('tr');
+            const productId = row.getAttribute('data-id');
+
+            const modal = document.querySelector('#deleteModal');
+            const instance = M.Modal.getInstance(modal);
+            instance.open();
+
+            // Обработка подтверждения или отмены удаления
+            const confirmDelete = document.querySelector('#confirmDelete');
+            const cancelDelete = document.querySelector('#cancelDelete');
+
+            confirmDelete.addEventListener('click', async () => {
+              try {
+                await fetch(`/api/products/${productId}`, {
+                  method: 'DELETE',
+                });
+
+                row.remove();
+                M.Toast.dismissAll();
+                M.toast({ html: 'Продукт успішно видалено' });
+              } catch (error) {
+                console.error('Помилка при видаленні продукта:', error);
+                M.Toast.dismissAll();
+                M.toast({ html: 'Виникла помилка при видаленні продукта' });
+              } finally {
+                instance.close();
+              }
+            });
+            cancelDelete.addEventListener('click', () => {
+              instance.close();
+            });
+          });
+        });
+
+        M.toast({ html: 'Продукти успішно оновлено' });
+        toggleEditMode(); // Выйти из режима редактирования после успешного обновления
+        updateTable(); // Обновить данные в таблице
+      } catch (error) {
+        console.error('Помилка при оновленні/додаванні продуктів:', error);
+      }
+    });
+
+    // Обновить данные в таблице после успешного обновления/добавления материалов на сервере
+    updateTable();
+
+    function updateTable() {
+      fetch('/api/products')
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Помилка під час отримання даних');
+          }
+          return response.json();
+        })
+        .then(data => {
+          const productRows = document.querySelectorAll('.productRow');
+          productRows.forEach((row, index) => {
+            const product = data[index];
+            if (product) {
+              row.children[0].textContent = product.category;
+              row.children[1].textContent = product.title;
+              row.children[2].textContent = product.price;
+            }
+          });
+        })
+        .catch(error => console.error(error));
+    }
+
+    const deleteButton = document.querySelector('.delete-button');
+    let isDeleteMode = false;
+
+    deleteButton.addEventListener('click', toggleDeleteMode);
+
+    function toggleDeleteMode() {
+      isDeleteMode = !isDeleteMode;
+
+      const deleteIcon = deleteButton.querySelector('i');
+      deleteIcon.textContent = isDeleteMode ? 'close' : 'delete';
+
+      const deleteRowButtons = document.querySelectorAll('.delete-row-btn');
+      deleteRowButtons.forEach(button => {
+        button.style.display = isDeleteMode ? 'inline-block' : 'none';
+      });
+
+      const productRows = document.querySelectorAll('.productRow');
+      productRows.forEach(row => {
+        const deleteButton = row.querySelector('.delete-row-btn');
+        if (!deleteButton) {
+          const newDeleteButton = document.createElement('a');
+          newDeleteButton.href = '#';
+          newDeleteButton.classList.add('delete-row-btn');
+          newDeleteButton.style.display = isDeleteMode ? 'inline-block' : 'none';
+          newDeleteButton.innerHTML = '<i class="material-icons">delete</i>';
+          row.querySelector('td:last-child').appendChild(newDeleteButton);
+        }
+      });
+    }
+
+    document.querySelectorAll('.delete-row-btn').forEach(button => {
+      button.addEventListener('click', async (event) => {
+        event.preventDefault();
+        const row = event.target.closest('tr');
+        const productId = row.getAttribute('data-id');
+
+        // Откройте модальное окно
+        const modal = document.querySelector('#deleteModal');
+        const instance = M.Modal.getInstance(modal);
+        instance.open();
+
+        // Обработка подтверждения или отмены удаления
+        const confirmDelete = document.querySelector('#confirmDelete');
+        const cancelDelete = document.querySelector('#cancelDelete');
+
+        confirmDelete.addEventListener('click', async () => {
+          try {
+            await fetch(`/api/products/${productId}`, {
+              method: 'DELETE',
+            });
+
+            row.remove(); // Удалить текущую строку
+            M.Toast.dismissAll();
+            M.toast({ html: 'Продукт успішно видалено' });
+            updateTable(); // Обновить данные в таблице после удаления
+          } catch (error) {
+            console.error('Помилка при видаленні продукта:', error);
+            M.Toast.dismissAll();
+            M.toast({ html: 'Виникла помилка при видаленні продукта' });
+          } finally {
+            instance.close();
+          }
+        });
+
+        cancelDelete.addEventListener('click', () => {
+          instance.close();
+        });
+      });
+    });
+
+    const addButton = document.querySelector('.add-button');
+
+    addButton.addEventListener('click', () => {
+      if (!isEditing) {
+        toggleEditMode(); // Включаем режим редактирования, если он еще не включен
+      }
+      addNewRow();
+    });
+
+    function addNewRow() {
+      let productsTable = document.querySelector('.products');
+
+      if (productsTable.querySelectorAll('tr').length === 1) {
+        const noProductsMessage = document.querySelector('p');
+        if (noProductsMessage) {
+          noProductsMessage.remove();
+        }
+      }
+
+      const newRow = document.createElement('tr');
+      newRow.classList.add('productRow');
+      newRow.innerHTML = `
+      <td class="editable editing"><input type="text" placeholder="Категорія"></td>
+      <td class="editable editing"><input type="text" placeholder="Назва продукту"></td>
+      <td class="editable editing"><input type="number" placeholder="Ціна"></td>
+      <td></td>
+    `;
+      productsTable.appendChild(newRow);
+    }
+
+</script>

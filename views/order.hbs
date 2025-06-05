@@ -1,0 +1,397 @@
+<document_content>
+  <form id="orderForm" action="/order" method="POST">
+    <h2>Нова специфікація</h2>
+    <div class="input-field">
+      <input type="text" id="date" name="delivery_date" class="datepicker" autocomplete="off">
+      <label for="date">Бажана дата постачання</label>
+    </div>
+    <!-- Выбор поставщика -->
+    <div class="input-field">
+<select class="provider" name="provider">
+  <option value="" disabled selected>Оберіть постачальника</option>
+  {{#each providers}}
+  <option value="{{this._id}}">{{this.provider}}</option>
+  {{/each}}
+</select>
+      <label for="provider">Постачальник</label>
+    </div>
+    <!-- Итоговая стоимость каждого материала -->
+    <table class="order-table">
+      <thead>
+        <tr>
+          <th>Категорія</th>
+          <th>Матеріал</th>
+          <th>Кількість</th>
+          <th>Вартість</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="materialRows">
+        <!-- Каждая строка для выбора материала будет содержать чип с итоговой стоимостью -->
+        <tr>
+          <td>
+            <div class="input-field">
+              <select class="category" name="categories" onchange="filterMaterials(this)" data-index="0">
+                <option value="" disabled selected>Оберіть категорію</option>
+                {{#each uniqueCategories}}
+                <option value="{{this}}">{{this}}</option>
+                {{/each}}
+              </select>
+            </div>
+          </td>
+          <td>
+            <div class="input-field">
+              <select class="material" name="materials[0][title]" onchange="updateOrderSummary()">
+                <option value="" disabled selected>Оберіть матеріал</option>
+                {{#each materials}}
+                <option value="{{title}}" data-price="{{price}}">{{title}}</option>
+                {{/each}}
+              </select>
+            </div>
+          </td>
+          <td>
+            <div class="input-field">
+              <input type="number" class="quantity" name="materials[0][quantity]" min="1"
+                oninput="updateOrderSummary()">
+            </div>
+          </td>
+          <td>
+            <div class="chip materialCost">0 грн.</div>
+          </td>
+          <td><button type="button" class="btn waves-effect waves-light red" onclick="removeMaterialRow(this)"><i
+                class="material-icons">delete</i></button></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Итоговая кількість -->
+    <div class="chips" style="padding: 10px;" id="orderSummary">
+      <div class="chip totalQuantityChip">Загальна кількість: </div>
+      <div class="chip totalPriceChip">Загальна вартість: </div>
+    </div>
+
+    <!-- Кнопка "плюсик" для добавления новой строки выбора товара -->
+    <button type="button" class="btn-floating waves-effect waves-light deep-purple" onclick="addMaterialRow()"><i
+        class="large material-icons">add_circle</i></button>
+    <script>
+      // Функция для добавления новой строки выбора товара
+      // Функция для обновления атрибута data-selected-category при изменении выбранной категории
+function updateSelectedCategory(categorySelect) {
+  categorySelect.dataset.selectedCategory = categorySelect.value;
+}
+
+// Функция для обновления атрибута data-selected-material при изменении выбранного материала
+function updateSelectedMaterial(materialSelect) {
+  materialSelect.dataset.selectedMaterial = materialSelect.value;
+}
+
+// Функция для добавления новой строки выбора товара
+function addMaterialRow() {
+  var materialRows = document.getElementById('materialRows');
+  var newRow = document.createElement('tr');
+
+  // Получаем индекс последнего элемента в массиве materials из скрытых полей формы или начинаем с 0, если строк нет
+  var lastMaterialIndex = Array.from(document.querySelectorAll('input[name^="materials["]')).pop()?.name.split('[')[1].split(']')[0] || -1;
+  var rowIndex = parseInt(lastMaterialIndex) + 1;
+
+  // Получаем выбранные значения категорий и материалов из существующих строк
+  var selectedCategories = Array.from(document.querySelectorAll('.category[data-selected-category]')).map(select => select.dataset.selectedCategory);
+  var selectedMaterials = Array.from(document.querySelectorAll('.material[data-selected-material]')).map(select => select.dataset.selectedMaterial);
+
+  newRow.innerHTML = `
+    <tr>
+      <td>
+        <div class="input-field">
+          <select class="category" name="categories" onchange="updateSelectedCategory(this); filterMaterials(this)" data-index="${rowIndex}">
+            <option value="" disabled selected>Оберіть категорію</option>
+            {{#each uniqueCategories}}
+            <option value="{{this}}" ${selectedCategories.includes(this) ? 'selected' : ''}>{{this}}</option>
+            {{/each}}
+          </select>
+        </div>
+      </td>
+      <td>
+        <div class="input-field">
+          <select class="material" name="materials[${rowIndex}][title]" onchange="updateSelectedMaterial(this); updateOrderSummary()">
+            <option value="" disabled selected>Оберіть матеріал</option>
+            {{#each materials}}
+            <option value="{{title}}" data-price="{{price}}" ${selectedMaterials.includes({{title}}) ? 'selected' : ''}>{{title}}</option>
+            {{/each}}
+          </select>
+        </div>
+      </td>
+      <td>
+        <div class="input-field">
+          <input type="number" class="quantity" name="materials[${rowIndex}][quantity]" min="1" oninput="updateOrderSummary()">
+        </div>  
+      </td>
+      <td><div class="chip materialCost">0 грн.</div></td>
+      <td><button type="button" class="btn waves-effect waves-light red" onclick="removeMaterialRow(this)"><i class="material-icons">delete</i></button></td>
+    </tr>
+  `;
+  materialRows.appendChild(newRow);
+
+  M.FormSelect.init(newRow.querySelectorAll('select'));
+
+  // Получаем выбранного поставщика
+  const providerId = document.querySelector('.provider').value;
+
+  // Вызываем loadProviderMaterials для обновления опций материалов и категорий только в новой строке
+  if (providerId) {
+    loadProviderMaterialsForRow(providerId, newRow);
+  }
+}
+
+      // Функция для удаления строки выбора товара
+      function removeMaterialRow(button) {
+        var row = button.parentNode.parentNode; // Получаем строку, содержащую кнопку
+        row.parentNode.removeChild(row); // Удаляем строку из DOM
+        updateOrderSummary(); // Обновляем итоговую количество
+      }
+
+      // Функция для обновления итоговой стоимости каждого материала
+      function updateOrderSummary() {
+        var totalQuantity = 0;
+        var totalPrice = 0;
+
+        // Перебираем все строки с материалами
+        var rows = document.querySelectorAll('#materialRows tr');
+        rows.forEach(function (row) {
+          var quantity = parseFloat(row.querySelector('.quantity').value);
+          var materialSelect = row.querySelector('.material');
+          var materialIndex = materialSelect.selectedIndex;
+          var materialPrice = parseFloat(materialSelect.options[materialIndex].getAttribute('data-price'));
+
+          if (!isNaN(quantity) && !isNaN(materialPrice)) {
+            var materialCost = quantity * materialPrice;
+            var materialCostChip = row.querySelector('.materialCost');
+            materialCostChip.innerHTML = materialCost + ' грн.';
+            totalQuantity += quantity;
+            totalPrice += materialCost;
+
+            // Получаем индекс материала из имени поля ввода количества
+            var quantityInput = row.querySelector('.quantity');
+            var index = quantityInput.name.match(/\[(\d+)\]/)[1];
+
+            // Сохраняем цену материала с учетом количества в скрытом поле формы
+            var priceInput = document.createElement('input');
+            priceInput.type = 'hidden';
+            priceInput.name = `materials[${index}][price]`;
+            priceInput.value = materialCost;
+
+            // Удаляем старое скрытое поле, если оно существует
+            var oldPriceInput = row.querySelector(`input[name="materials[${index}][price]"]`);
+            if (oldPriceInput) {
+              row.removeChild(oldPriceInput);
+            }
+
+            row.appendChild(priceInput);
+          }
+        });
+
+        // Выводим общее количество в чип
+        var totalQuantityChip = document.querySelector('.totalQuantityChip');
+        totalQuantityChip.innerHTML = 'Загальна кількість: ' + totalQuantity + ' шт.';
+
+        // Выводим общую стоимость в чип
+        var totalPriceChip = document.querySelector('.totalPriceChip');
+        totalPriceChip.innerHTML = 'Загальна вартість: ' + totalPrice + ' грн.';
+      }
+
+
+
+    </script>
+    <!-- Кнопка "Створити" -->
+    <button type="button" class="btn waves-effect waves-light" onclick="validateForm()">Створити</button>
+  </form>
+  <!-- Подключение скриптов Materialize -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+  <!-- Инициализация компонентов Materialize -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // Инициализация datepicker
+      var datepicker = document.querySelectorAll('.datepicker');
+      M.Datepicker.init(datepicker, {
+        format: 'dd.mm.yyyy',
+        showClearBtn: true,
+        i18n: {
+          cancel: 'Відміна',
+          clear: 'Очистити',
+          done: 'Готово',
+          months: ["Січень", "Лютий", "Березень", "Квітень", "Травень", "Червень", "Липень", "Серпень", "Вересень", "Жовтень", "Листопад", "Грудень"],
+                monthsShort: ["Січ", "Лют", "Бер", "Квт", "Трав", "Черв", "Лип", "Сер", "Вер", "Жов", "Лис", "Груд"],
+                weekdays: ["Неділя","Понеділок", "Вівторок", "Середа", "Четвер", "П'ятниця", "Субота"],
+                weekdaysShort: ["Нд","Пн", "Вт", "Ср", "Чт", "Пт", "Сб"],
+                weekdaysAbbrev: ["Н","П", "В", "С", "Ч", "П", "С"]
+        }
+      });
+
+      // Инициализация select
+      var selects = document.querySelectorAll('select');
+      M.FormSelect.init(selects);
+    });
+
+    async function validateForm() {
+      var form = document.getElementById('orderForm');
+      var isValid = form.checkValidity();
+      if (isValid) {
+        // Если форма валидна, проверяем, все ли поля заполнены
+        var inputs = form.querySelectorAll('input, select');
+        var allFieldsFilled = true;
+        inputs.forEach(function (input) {
+          if (!input.value.trim()) {
+            allFieldsFilled = false;
+          }
+        });
+        // Если хотя бы одно поле не заполнено, выводим сообщение о необходимости заполнить все поля
+        if (!allFieldsFilled) {
+          M.toast({ html: 'Необхідно заповнити всі поля!', classes: 'red' });
+        } else {
+          // В этой части вы можете добавить свою логику обработки формы, например, отправку данных на сервер
+          // Для отправки данных на сервер вы можете использовать fetch API или любую другую библиотеку для HTTP-запросов
+          // В этом примере я оставлю эту часть пустой
+          M.toast({ html: 'Нову специфікацію створено!' });
+          form.submit();
+        }
+      } else {
+        // Если форма не валидна, подсвечиваем незаполненные поля
+        var invalidFields = form.querySelectorAll(':invalid');
+        invalidFields.forEach(function (field) {
+          field.classList.add('invalid');
+        });
+      }
+    }
+
+    // Добавьте функцию filterMaterials для обновления списка материалов при изменении выбранной категории
+function filterMaterials(categorySelect) {
+  var selectedCategory = categorySelect.value;
+  var row = categorySelect.closest('tr');
+  var materialSelect = row.querySelector('.material');
+  var index = categorySelect.getAttribute('data-index');
+  var providerId = document.querySelector('.provider').value;
+
+  if (providerId) {
+    fetch(`/api/provider-materials?providerId=${encodeURIComponent(providerId)}&category=${encodeURIComponent(selectedCategory)}`)
+      .then(response => response.json())
+      .then(data => {
+        materialSelect.innerHTML = '<option value="" disabled selected>Оберіть матеріал</option>';
+        data.materials.forEach(material => {
+          var option = document.createElement('option');
+          option.value = material.title;
+          option.dataset.price = material.price;
+          option.textContent = material.title;
+          materialSelect.appendChild(option);
+        });
+        M.FormSelect.init(materialSelect);
+      })
+      .catch(error => {
+        console.error('Ошибка при получении материалов:', error);
+      });
+  }
+}
+
+
+function loadProviderMaterialsForRow(providerId, row) {
+  fetch(`/api/provider-materials?providerId=${encodeURIComponent(providerId)}`)
+    .then(response => {
+      if (response.ok) {
+        return response.json();
+      } else {
+        throw new Error('Ошибка при получении материалов поставщика');
+      }
+    })
+    .then(data => {
+      const materialSelect = row.querySelector('.material');
+      const categorySelect = row.querySelector('.category');
+
+      // Обновляем опции в select материалов для указанной строки
+      materialSelect.innerHTML = '<option value="" disabled selected>Оберіть матеріал</option>';
+      data.materials.forEach(material => {
+        const option = document.createElement('option');
+        option.value = material.title;
+        option.dataset.price = material.price;
+        option.textContent = material.title;
+        materialSelect.appendChild(option);
+      });
+      M.FormSelect.init(materialSelect); // Инициализируем select элемент
+
+      // Обновляем опции в select категорий для указанной строки
+      categorySelect.innerHTML = '<option value="" disabled selected>Оберіть категорію</option>';
+      data.uniqueCategories.forEach(category => {
+        const option = document.createElement('option');
+        option.value = category;
+        option.textContent = category;
+        categorySelect.appendChild(option);
+      });
+      M.FormSelect.init(categorySelect); // Инициализируем select элемент
+    })
+    .catch(error => {
+      console.error('Ошибка при получении материалов поставщика:', error);
+    });
+}
+
+function loadProviderMaterials(providerId) {
+  return fetch(`/api/provider-materials?providerId=${encodeURIComponent(providerId)}`)
+    .then(response => {
+      if (response.ok) {
+        return response.json();
+      } else {
+        throw new Error('Ошибка при получении материалов поставщика');
+      }
+    });
+}
+
+const providerSelect = document.querySelector('.provider');
+providerSelect.addEventListener('change', () => {
+  const providerId = providerSelect.value;
+  if (providerId) {
+    loadProviderMaterials(providerId)
+      .then(data => {
+        const materialRows = document.querySelectorAll('#materialRows tr');
+        materialRows.forEach(row => {
+          const materialSelect = row.querySelector('.material');
+          const categorySelect = row.querySelector('.category');
+
+          // Обновляем опции в select материалов для указанной строки
+          materialSelect.innerHTML = '<option value="" disabled selected>Оберіть матеріал</option>';
+          data.materials.forEach(material => {
+            const option = document.createElement('option');
+            option.value = material.title;
+            option.dataset.price = material.price;
+            option.textContent = material.title;
+            materialSelect.appendChild(option);
+          });
+          M.FormSelect.init(materialSelect); // Инициализируем select элемент
+
+          // Обновляем опции в select категорий для указанной строки
+          categorySelect.innerHTML = '<option value="" disabled selected>Оберіть категорію</option>';
+          data.uniqueCategories.forEach(category => {
+            const option = document.createElement('option');
+            option.value = category;
+            option.textContent = category;
+            categorySelect.appendChild(option);
+          });
+          M.FormSelect.init(categorySelect); // Инициализируем select элемент
+        });
+      })
+      .catch(error => {
+        console.error('Ошибка при получении материалов поставщика:', error);
+      });
+  } else {
+    // Очистите опции в select материалов и категорий для всех строк
+    const materialRows = document.querySelectorAll('#materialRows tr');
+    materialRows.forEach(row => {
+      const materialSelect = row.querySelector('.material');
+      const categorySelect = row.querySelector('.category');
+
+      materialSelect.innerHTML = '<option value="" disabled selected>Оберіть матеріал</option>';
+      M.FormSelect.init(materialSelect);
+
+      categorySelect.innerHTML = '<option value="" disabled selected>Оберіть категорію</option>';
+      M.FormSelect.init(categorySelect);
+    });
+  }
+});
+
+  </script>
+</document_content>

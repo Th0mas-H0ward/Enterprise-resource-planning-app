@@ -1,0 +1,359 @@
+<div class="specification-header">
+  <h2>Специфікація {{_id}}</h2>
+  <form action="#" id="postSpecificationForm">
+    <p class="specificationCheckboxes">
+      <label>
+        <input type="checkbox" id="isPostedCheckbox" {{#if specification.isPosted}}checked {{else}}disabled{{/if}} />
+        <span id="isPostedLabel" class="{{#if specification.isPosted}}green-text{{/if}}">{{#if
+          specification.isPosted}}Проведено{{else}}Не проведено{{/if}}</span>
+      </label>
+      <label>
+        <input type="checkbox" id="isCompletedCheckbox" {{#if specification.isCompleted}}checked {{/if}} />
+        <span id="isCompletedLabel" class="{{#if specification.isCompleted}}blue-text{{/if}}">{{#if
+          specification.isCompleted}}Виконано{{else}}Не виконано{{/if}}</span>
+      </label>
+    </p>
+  </form>
+</div>
+
+<table class="specification-table">
+  <tr class="specification-table-header">
+    <th id="postedDateHeader"></th>
+    <th>Бажана дата доставки</th>
+    <th>Постачальник</th>
+    <th>Ел. пошта</th>
+    <th>Матеріал</th>
+    <th>Кількість (од.)</th>
+    <th>Вартість (UAH)</th>
+  </tr>
+
+  <tr>
+    <td id="postedDateCell"></td>
+    <td>{{specification.date}}</td>
+    <td>{{specification.provider}}</td>
+    <td>{{specification.email}}</td>
+    <td>
+      <ul>
+        {{#each specification.materials}}
+        <li>{{this.title}}</li>
+        {{/each}}
+      </ul>
+    </td>
+    <td>
+      <ul>
+        {{#each specification.materials}}
+        <li>{{this.quantity}}</li>
+        {{/each}}
+      </ul>
+    </td>
+    <td>
+      <ul>
+        {{#each specification.materials}}
+        <li>{{this.price}}</li>
+        {{/each}}
+      </ul>
+    </td>
+  </tr>
+</table>
+
+<div class="chip QuantityChip"><span id="totalAmountDisplay">Сумарна вартість: 0 UAH</span>
+</div>
+
+<div class="specification-controls">
+  <div class="row">
+    <form class="col s12">
+      <div class="row">
+        <div class="input-field col s6">
+          <i class="material-icons prefix">mode_edit</i>
+          <textarea id="icon_prefix2" class="materialize-textarea"></textarea>
+          <label for="icon_prefix2">Коментар до замовлення</label>
+        </div>
+      </div>
+    </form>
+  </div>
+  <div class="specification-buttons">
+    <a href="/specification/{{specification._id}}/pdf" class="btn waves-effect waves-light brown" target="_blank"
+      rel="noopener noreferrer" id="downloadPDFButton">
+      Оформити на бланку
+      <i class="material-icons right">picture_as_pdf</i>
+    </a>
+    <button class="btn waves-effect waves-light green {{#if specification.isPosted}}disabled{{/if}}"
+      id="markAsPostedButton">
+      Провести
+    </button>
+    <button class="btn waves-effect waves-yellow orange {{#if specification.isPosted}}disabled{{/if}}"
+      id="sendSpecificationButton">
+      Провести й відправити запит
+      <i class="material-icons right">email</i>
+    </button>
+    <a class="btn waves-effect waves-orange red" id="deleteButton" data-target="deleteModal">
+      Видалити з бази даних
+      <i class="material-icons right">delete</i>
+    </a>
+  </div>
+
+</div>
+
+<div id="deleteModal" class="modal">
+  <div class="modal-content">
+    <h4>Підтвердження видалення</h4>
+    <p>Ви впевнені, що хочете назавжди видалити цю специфікацію з бази даних (впливає на звітність)?</p>
+  </div>
+  <div class="modal-footer">
+    <a href="#!" class="modal-close waves-effect waves-green btn-flat" id="cancelDelete">Скасувати</a>
+    <a href="#!" class="modal-close waves-effect waves-red btn-flat" id="confirmDelete">Видалити</a>
+  </div>
+</div>
+
+<script>
+  const sendSpecificationButton = document.querySelector('#sendSpecificationButton');
+  const markAsPostedButton = document.querySelector('#markAsPostedButton');
+  const specificationId = '{{ specification._id }}';
+  const postSpecificationForm = document.querySelector('#postSpecificationForm');
+  const isPostedCheckbox = document.querySelector('#isPostedCheckbox');
+  const isPostedLabel = document.querySelector('#isPostedLabel');
+  const isCompletedCheckbox = document.querySelector('#isCompletedCheckbox');
+  const isCompletedLabel = document.querySelector('#isCompletedLabel');
+  const downloadPDFButton = document.querySelector('#downloadPDFButton');
+
+  const formatDate = (date) => {
+    const options = { year: 'numeric', month: 'numeric', day: 'numeric' };
+    return new Date(date).toLocaleDateString('uk-UA', options);
+  };
+
+  const toggleCommentField = (shouldShow) => {
+    const commentField = document.querySelector('#icon_prefix2');
+    const commentFieldWrapper = commentField.closest('.input-field');
+
+    if (shouldShow) {
+      commentFieldWrapper.style.display = 'block';
+    } else {
+      commentFieldWrapper.style.display = 'none';
+    }
+  };
+
+  const togglePostedDateCell = (shouldShow, postedDate) => {
+    const postedDateHeader = document.querySelector('#postedDateHeader');
+    const postedDateCell = document.querySelector('#postedDateCell');
+
+    if (shouldShow) {
+      postedDateHeader.textContent = 'Заявку подано';
+      postedDateCell.textContent = formatDate(postedDate || new Date());
+      postedDateHeader.style.display = 'table-cell';
+      postedDateCell.style.display = 'table-cell';
+    } else {
+      postedDateHeader.textContent = '';
+      postedDateCell.textContent = '';
+      postedDateHeader.style.display = 'none';
+      postedDateCell.style.display = 'none';
+    }
+  };
+
+  const deleteButton = document.querySelector('#deleteButton');
+  const deleteModal = document.querySelector('#deleteModal');
+  let deleteModalInstance;
+
+  document.addEventListener('DOMContentLoaded', () => {
+    toggleCommentField(!{{ specification.isPosted }});
+  togglePostedDateCell({{ specification.isPosted }}, '{{ specification.postedDate }}');
+  var modalElems = document.querySelectorAll('.modal');
+  var modalInstances = M.Modal.init(modalElems);
+
+  // Инициализируем модальное окно удаления
+  deleteModalInstance = M.Modal.init(deleteModal);
+});
+
+  deleteButton.addEventListener('click', deleteSpecification);
+
+  async function deleteSpecification(event) {
+    event.preventDefault();
+    deleteModalInstance.open();
+  }
+
+  const confirmDeleteButton = document.querySelector('#confirmDelete');
+
+  confirmDeleteButton.addEventListener('click', async () => {
+    try {
+      const response = await fetch(`/specification-details/${specificationId}`, {
+        method: 'DELETE'
+      });
+
+      if (response.ok) {
+        M.toast({ html: 'Спецификацию успешно удалено', classes: 'green' });
+        // После успешного удаления перенаправляем пользователя на страницу списка спецификаций
+        window.location.href = '/specifications';
+      } else {
+        const error = await response.json();
+        M.toast({ html: `Ошибка при удалении спецификации: ${error.message}`, classes: 'red' });
+      }
+    } catch (error) {
+      console.error('Ошибка при удалении спецификации:', error);
+      M.toast({ html: 'Произошла ошибка при удалении спецификации', classes: 'red' });
+    }
+  });
+
+  const updateCompletedStatus = async () => {
+    try {
+      const response = await fetch(`/specification/${specificationId}/complete`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ isCompleted: isCompletedCheckbox.checked })
+      });
+
+      if (response.ok) {
+        const updatedSpecification = await response.json();
+        isCompletedCheckbox.checked = updatedSpecification.isCompleted;
+        isCompletedLabel.textContent = updatedSpecification.isCompleted ? 'Виконано' : 'Не виконано';
+        isCompletedLabel.classList.toggle('blue-text', updatedSpecification.isCompleted);
+
+        M.toast({ html: updatedSpecification.isCompleted ? 'Замовлення успішно відмічене як виконане' : 'Замовлення успішно відмічене як невиконане', classes: 'green' });
+      } else {
+        const error = await response.json();
+        M.toast({ html: `Помилка відмічання замовлення як ${isCompletedCheckbox.checked ? 'виконаного' : 'невиконаного'}: ${error.message}`, classes: 'red' });
+      }
+    } catch (error) {
+      console.error(`Помилка під час відмічання замовлення як ${isCompletedCheckbox.checked ? 'виконаного' : 'невиконаного'}:`, error);
+      M.toast({ html: `Виникла помилка під час відмічання замовлення як ${isCompletedCheckbox.checked ? 'виконаного' : 'невиконаного'}`, classes: 'red' });
+    }
+  };
+
+  isCompletedCheckbox.addEventListener('change', updateCompletedStatus);
+
+  const updatePostStatus = async () => {
+    try {
+      const response = await fetch(`/specification/${specificationId}/post`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const updatedSpecification = await response.json();
+        isPostedCheckbox.checked = updatedSpecification.isPosted;
+        isPostedLabel.textContent = updatedSpecification.isPosted ? 'Проведено' : 'Не проведено';
+        isPostedLabel.classList.toggle('green-text', updatedSpecification.isPosted);
+
+        const disabledButtons = document.querySelectorAll('.specification-buttons button:not(#downloadPDFButton)');
+        disabledButtons.forEach(button => {
+          button.disabled = updatedSpecification.isPosted;
+        });
+
+        toggleCommentField(!updatedSpecification.isPosted);
+        togglePostedDateCell(updatedSpecification.isPosted, updatedSpecification.postedDate);
+
+        M.toast({ html: 'Специфікацію успішно відмічено як проведену', classes: 'green' });
+      } else {
+        const error = await response.json();
+        M.toast({ html: `Помилка відмічання специфікації як проведеної: ${error.message}`, classes: 'red' });
+      }
+    } catch (error) {
+      console.error('Помилка під час відмічання специфікації як проведеної:', error);
+      M.toast({ html: 'Виникла помилка під час відмічання специфікації як проведеної', classes: 'red' });
+    }
+  };
+
+  isPostedCheckbox.addEventListener('change', updatePostStatus);
+
+  sendSpecificationButton.addEventListener('click', async () => {
+    const commentField = document.querySelector('#icon_prefix2');
+    const comment = commentField.value || '';
+
+    try {
+      const response = await fetch(`/send-specification/${specificationId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ comment })
+      });
+
+      if (response.ok) {
+        M.toast({ html: 'Специфікацію успішно надіслано на email', classes: 'green' });
+        await updatePostStatus();
+      } else {
+        const error = await response.json();
+        M.toast({ html: `Помилка відправлення специфікації: ${error.message}`, classes: 'red' });
+      }
+    } catch (error) {
+      console.error('Помилка під час відправлення специфікації:', error);
+      M.toast({ html: 'Виникла помилка під час відправлення специфікації', classes: 'red' });
+    }
+  });
+
+  markAsPostedButton.addEventListener('click', async () => {
+    try {
+      const response = await fetch(`/specification/${specificationId}/post`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const updatedSpecification = await response.json();
+        isPostedCheckbox.checked = updatedSpecification.isPosted;
+        isPostedLabel.textContent = updatedSpecification.isPosted ? 'Проведено' : 'Не проведено';
+        isPostedLabel.classList.toggle('green-text', updatedSpecification.isPosted);
+
+        const disabledButtons = document.querySelectorAll('.specification-buttons button:not(#downloadPDFButton)');
+        disabledButtons.forEach(button => {
+          button.disabled = updatedSpecification.isPosted;
+        });
+
+        toggleCommentField(!updatedSpecification.isPosted);
+        togglePostedDateCell(updatedSpecification.isPosted, updatedSpecification.postedDate);
+
+        M.toast({ html: 'Специфікацію успішно відмічено як проведену', classes: 'green' });
+      } else {
+        const error = await response.json();
+        M.toast({ html: `Помилка відмічання специфікації як проведеної: ${error.message}`, classes: 'red' });
+      }
+    } catch (error) {
+      console.error('Помилка під час відмічання специфікації як проведеної:', error);
+      M.toast({ html: 'Виникла помилка під час відмічання специфікації як проведеної', classes: 'red' });
+    }
+  });
+
+  downloadPDFButton.addEventListener('click', async (event) => {
+    event.preventDefault();
+
+    try {
+      const response = await fetch(`/specification/${specificationId}/pdf`);
+      const pdfBlob = await response.blob();
+
+      if (pdfBlob.size === 0) {
+        M.toast({ html: 'Ошибка при генерации PDF-файла', classes: 'red' });
+        return;
+      }
+
+      const downloadUrl = window.URL.createObjectURL(pdfBlob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = 'specification.pdf';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error('Помилка при завантаженні PDF-файлу:', error);
+      M.toast({ html: 'Виникла помилка при завантаженні PDF-файлу', classes: 'red' });
+    }
+  });
+
+  const calculateTotalAmount = () => {
+    let totalAmount = 0;
+    const priceElements = document.querySelectorAll('td:nth-child(7) li');
+
+    priceElements.forEach((priceElement, index) => {
+      const price = parseFloat(priceElements[index].textContent);
+      totalAmount += price;
+    });
+
+    return totalAmount.toFixed(2);
+  };
+
+  const totalAmountDisplay = document.getElementById('totalAmountDisplay');
+  totalAmountDisplay.textContent = `Сумарна вартість: ${calculateTotalAmount()} UAH`;
+</script>

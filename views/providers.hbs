@@ -1,0 +1,15 @@
+<h2>Список постачальників</h2>
+{{#if providers.length}}
+<ul class="collection providers">
+  {{#each providers}}
+  <li class="collection-item avatar" onmouseover="showDeleteButton('{{_id}}')" onmouseout="hideDeleteButton('{{_id}}')">
+    <a href="/provider/{{_id}}" style="text-decoration: none; color: inherit;">
+      <i class="material-icons circle green">person</i>
+      <span class="title">{{provider}}</span>
+    </a>
+  </li>
+  {{/each}}
+</ul>
+{{else}}
+<p>Наразі не додано жодного постачальника.</p>
+{{/if}}

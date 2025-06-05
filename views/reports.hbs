@@ -1,0 +1,83 @@
+<h2>Статистика закупівель за <span id="currentYear"></span> рік</h2>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<div class="chart-container">
+  <canvas id="myChart"></canvas>
+  <div class="chartControls">
+    <button id="prevYearBtn" class="btn waves-effect waves-light">
+      <i class="material-icons prefix">chevron_left</i>
+    </button>
+    <button id="nextYearBtn" class="btn waves-effect waves-light">
+      <i class="material-icons prefix">chevron_right</i>
+    </button>
+  </div>
+</div>
+
+<script>
+  const labels = {{{ labels }}};
+  const data = {{{ data }}};
+
+  const ctx = document.getElementById('myChart').getContext('2d');
+  let myChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Місячні витрати',
+        data: data,
+        borderColor: 'red',
+        fill: false
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        x: {
+          display: true,
+          title: {
+            display: true,
+            text: 'Місяць/Рік'
+          }
+        },
+        y: {
+          display: true,
+          title: {
+            display: true,
+            text: 'Сума'
+          },
+          suggestedMin: 0,
+          suggestedMax: Math.max(...data) * 1.2 // Устанавливаем максимальное значение с запасом 20%
+        }
+      }
+    }
+  });
+
+  const prevYearBtn = document.getElementById('prevYearBtn');
+  const nextYearBtn = document.getElementById('nextYearBtn');
+  const currentYearDisplay = document.getElementById('currentYear');
+  let currentYear = new Date().getFullYear();
+
+  currentYearDisplay.textContent = currentYear;
+
+  prevYearBtn.addEventListener('click', () => {
+    currentYear--;
+    updateChart(currentYear);
+  });
+
+  nextYearBtn.addEventListener('click', () => {
+    currentYear++;
+    updateChart(currentYear);
+  });
+
+  function updateChart(year) {
+    const filteredLabels = labels.filter(label => label.endsWith(`/${year}`));
+    const filteredData = filteredLabels.map(label => data[labels.indexOf(label)]);
+
+    myChart.data.labels = filteredLabels;
+    myChart.data.datasets[0].data = filteredData;
+    myChart.update();
+
+    currentYearDisplay.textContent = year;
+  }
+
+  updateChart(currentYear);
+</script>

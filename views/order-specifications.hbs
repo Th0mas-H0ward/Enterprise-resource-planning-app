@@ -1,0 +1,115 @@
+<h2>Список специфікацій</h2>
+{{#if orderSpecifications.length}}
+<ul class="collection specifications">
+  {{#each orderSpecifications}}
+  <a href="/order/{{_id}}" style="text-decoration: none; color: inherit;">
+    <li class="collection-item avatar" onmouseover="showDeleteButton('{{_id}}')"
+      onmouseout="hideDeleteButton('{{_id}}')">
+      <i class="material-icons circle {{#if isPosted}}green{{else}}red{{/if}}">description</i>
+      <span class="title">{{customer}}</span>
+      {{#if isPosted}}<p>Проведено: {{formatDate postedDate}}</p>{{/if}}
+      {{#if isPosted}}<p>Доставити до: {{date}}</p>{{/if}}
+
+      {{#unless isCompleted}}
+      {{#if (eq orderStatus 1)}}<p class="blue-text">Прийнято</p>{{/if}} 
+      {{#if (eq orderStatus 2)}}<p class="blue-text">У плануванні</p>{{/if}}
+      {{#if (eq orderStatus 3)}}<p class="blue-text">Виробляється</p>{{/if}}
+      {{#if (eq orderStatus 4)}}<p class="blue-text">Контроль якості</p>{{/if}}
+      {{#if (eq orderStatus 5)}}<p class="blue-text">Їде на склад</p>{{/if}}
+      {{#if (eq orderStatus 6)}}<p class="blue-text">На складі</p>{{/if}}
+      {{/unless}}
+
+      <div class="specificationCheckboxes">
+        <input type="checkbox" class="spec-posted-checkbox" data-spec-id="{{_id}}" {{#if isPosted}}checked{{/if}}
+          disabled />
+        <span class="spec-posted-label {{#if isPosted}}green-text{{/if}}">{{#if isPosted}}Проведено{{else}}Не
+          проведено{{/if}}</span>
+        </label>
+        <label>
+          <input type="checkbox" class="spec-completed-checkbox" data-spec-id="{{_id}}" {{#if
+            isCompleted}}checked{{/if}} disabled />
+          <span class="spec-completed-label {{#if isCompleted}}blue-text{{/if}}">{{#if isCompleted}}Виконано{{else}}Не
+            виконано{{/if}}</span>
+        </label>
+
+      </div>
+      <label>
+
+
+        <a href="#" class="secondary-content delete-button" data-spec-id="{{_id}}" onclick="deleteSpecification(event)">
+          <i class="material-icons">delete</i>
+        </a>
+    </li>
+  </a>
+  {{/each}}
+</ul>
+{{else}}
+<p>Наразі не створено жодної специфікації.</p>
+{{/if}}
+
+<div id="deleteModal" class="modal">
+  <div class="modal-content">
+    <h4>Підтвердження видалення</h4>
+    <p>Ви впевнені, що хочете видалити цю специфікацію зі списку (залишається в базі даних)?</p>
+  </div>
+  <div class="modal-footer">
+    <a href="#!" class="modal-close waves-effect waves-green btn-flat" id="cancelDelete">Скасувати</a>
+    <a href="#!" class="modal-close waves-effect waves-red btn-flat" id="confirmDelete">Видалити</a>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var modalElems = document.querySelectorAll('.modal');
+    var modalInstances = M.Modal.init(modalElems);
+  });
+
+  function showDeleteButton(specId) {
+    const deleteButton = document.querySelector(`.delete-button[data-spec-id="${specId}"]`);
+    if (deleteButton) {
+      deleteButton.style.display = 'block';
+    }
+  }
+
+  function hideDeleteButton(specId) {
+    const deleteButton = document.querySelector(`.delete-button[data-spec-id="${specId}"]`);
+    if (deleteButton) {
+      deleteButton.style.display = 'none';
+    }
+  }
+
+  async function deleteSpecification(event) {
+    event.preventDefault();
+    const specId = event.target.parentElement.dataset.specId;
+    const modal = document.querySelector('#deleteModal');
+    const instance = M.Modal.getInstance(modal);
+    instance.open();
+    const confirmDelete = document.querySelector('#confirmDelete');
+    const cancelDelete = document.querySelector('#cancelDelete');
+
+    confirmDelete.addEventListener('click', async () => {
+      try {
+        const response = await fetch(`/order/${specId}`, { method: 'DELETE' });
+        const data = await response.json();
+        M.toast({ html: data.message });
+        const listItem = event.target.closest('.collection-item');
+        if (listItem) {
+          listItem.remove();
+        } else {
+          console.error('Не удалось найти элемент списка для удаления');
+        }
+      } catch (error) {
+        console.error('Ошибка при удалении спецификации:', error);
+        alert('Ошибка при удалении спецификации');
+      } finally {
+        instance.close();
+      }
+    });
+  }
+</script>
+
+<style>
+  .delete-button {
+    display: none;
+  }
+</style>

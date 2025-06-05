@@ -1,0 +1,374 @@
+<div class="specification-header">
+  <h2>Замовлення</h2>
+  <p>Номер в базі: {{order._id}}</p>
+  <form action="#" id="postSpecificationForm">
+    <p class="specificationCheckboxes">
+      <label>
+        <input type="checkbox" id="isPostedCheckbox" {{#if order.isPosted}}checked {{else}}disabled{{/if}} />
+        <span id="isPostedLabel" class="{{#if order.isPosted}}green-text{{/if}}">{{#if
+          order.isPosted}}Проведено{{else}}Не проведено{{/if}}</span>
+      </label>
+      <label>
+        <input type="checkbox" id="isCompletedCheckbox" {{#if order.isCompleted}}checked {{/if}} />
+        <span id="isCompletedLabel" class="{{#if order.isCompleted}}blue-text{{/if}}">{{#if
+          order.isCompleted}}Виконано{{else}}Не виконано{{/if}}</span>
+      </label>
+    </p>
+  </form>
+</div>
+
+<div class="order-progress">
+  <ul class="progress-steps">
+    <li class="step" data-step="1">
+      <span class="step-number">1</span>
+      <span class="step-label">Прийнято</span>
+    </li>
+    <li class="step" data-step="2">
+      <span class="step-number">2</span>
+      <span class="step-label">У плануванні</span>
+    </li>
+    <li class="step" data-step="3">
+      <span class="step-number">3</span>
+      <span class="step-label">Виробляється</span>
+    </li>
+    <li class="step" data-step="4">
+      <span class="step-number">4</span>
+      <span class="step-label">Контроль якості</span>
+    </li>
+    <li class="step" data-step="5">
+      <span class="step-number">5</span>
+      <span class="step-label">Їде на склад</span>
+    </li>
+    <li class="step" data-step="6">
+      <span class="step-number">6</span>
+      <span class="step-label">На складі</span>
+    </li>
+  </ul>
+</div>
+
+<table class="specification-table">
+  <tr class="specification-table-header">
+    <th id="postedDateHeader"></th>
+    <th>Бажана дата доставки</th>
+    <th>Замовник</th>
+    <th>Ел. пошта</th>
+    <th>Продукція</th>
+    <th>Кількість (од.)</th>
+    <th>Вартість (UAH)</th>
+  </tr>
+
+  <tr>
+    <td id="postedDateCell"></td>
+    <td>{{order.date}}</td>
+    <td>{{order.customer}}</td>
+    <td>{{order.email}}</td>
+    <td>
+      <ul>
+        {{#each order.products}}
+        <li>{{this.title}}</li>
+        {{/each}}
+      </ul>
+    </td>
+    <td>
+      <ul>
+        {{#each order.products}}
+        <li>{{this.quantity}}</li>
+        {{/each}}
+      </ul>
+    </td>
+    <td>
+      <ul>
+        {{#each order.products}}
+        <li>{{this.price}}</li>
+        {{/each}}
+      </ul>
+    </td>
+  </tr>
+</table>
+
+<div class="chip QuantityChip"><span id="totalAmountDisplay">Сумарна вартість: 0 UAH</span>
+</div>
+
+<div class="orderSpecification-controls">
+  <div class="orderSpecification-buttons">
+    <a href="/order/{{order._id}}/pdf" class="btn waves-effect waves-light brown" target="_blank"
+      rel="noopener noreferrer" id="downloadPDFButton">
+      Оформити накладну
+      <i class="material-icons right">picture_as_pdf</i>
+    </a>
+    <button class="btn waves-effect waves-light green {{#if order.isPosted}}disabled{{/if}}" id="markAsPostedButton">
+      Провести
+    </button>
+    <button class="btn waves-effect waves-yellow orange {{#if order.isPosted}}disabled{{/if}}"
+      id="sendSpecificationButton">
+      Провести й відправити накладну
+      <i class="material-icons right">email</i>
+    </button>
+    <a class="btn waves-effect waves-orange red" id="deleteButton" data-target="deleteModal">
+      Видалити з бази даних
+      <i class="material-icons right">delete</i>
+    </a>
+  </div>
+
+</div>
+
+<div id="deleteModal" class="modal">
+  <div class="modal-content">
+    <h4>Підтвердження видалення</h4>
+    <p>Ви впевнені, що хочете назавжди видалити цю специфікацію з бази даних (впливає на звітність)?</p>
+  </div>
+  <div class="modal-footer">
+    <a href="#!" class="modal-close waves-effect waves-green btn-flat" id="cancelDelete">Скасувати</a>
+    <a href="#!" class="modal-close waves-effect waves-red btn-flat" id="confirmDelete">Видалити</a>
+  </div>
+</div>
+
+<script>
+const sendSpecificationButton = document.querySelector('#sendSpecificationButton');
+const markAsPostedButton = document.querySelector('#markAsPostedButton');
+const orderId = '{{ order._id }}';
+const postSpecificationForm = document.querySelector('#postSpecificationForm');
+const isPostedCheckbox = document.querySelector('#isPostedCheckbox');
+const isPostedLabel = document.querySelector('#isPostedLabel');
+const isCompletedCheckbox = document.querySelector('#isCompletedCheckbox');
+const isCompletedLabel = document.querySelector('#isCompletedLabel');
+const downloadPDFButton = document.querySelector('#downloadPDFButton');
+
+const formatDate = (date) => {
+  const options = { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' };
+  return new Date(date).toLocaleDateString('uk-UA', options);
+};
+
+const togglePostedDateCell = (shouldShow, postedDate) => {
+  const postedDateHeader = document.querySelector('#postedDateHeader');
+  const postedDateCell = document.querySelector('#postedDateCell');
+
+  if (shouldShow) {
+    postedDateHeader.textContent = 'Накладну надано';
+    postedDateCell.textContent = formatDate(postedDate || new Date());
+    postedDateHeader.style.display = 'table-cell';
+    postedDateCell.style.display = 'table-cell';
+  } else {
+    postedDateHeader.textContent = '';
+    postedDateCell.textContent = '';
+    postedDateHeader.style.display = 'none';
+    postedDateCell.style.display = 'none';
+  }
+};
+
+const deleteButton = document.querySelector('#deleteButton');
+const deleteModal = document.querySelector('#deleteModal');
+let deleteModalInstance;
+
+document.addEventListener('DOMContentLoaded', () => {
+  togglePostedDateCell({{ order.isPosted }}, '{{ order.postedDate }}');
+  var modalElems = document.querySelectorAll('.modal');
+  var modalInstances = M.Modal.init(modalElems);
+
+  // Инициализируем модальное окно удаления
+  deleteModalInstance = M.Modal.init(deleteModal);
+});
+
+deleteButton.addEventListener('click', deleteSpecification);
+
+async function deleteSpecification(event) {
+  event.preventDefault();
+  deleteModalInstance.open();
+}
+
+const confirmDeleteButton = document.querySelector('#confirmDelete');
+
+confirmDeleteButton.addEventListener('click', async () => {
+  try {
+    const response = await fetch(`/order-details/${orderId}`, {
+      method: 'DELETE'
+    });
+
+    if (response.ok) {
+      M.toast({ html: 'Спецификацию успешно удалено', classes: 'green' });
+      // После успешного удаления перенаправляем пользователя на страницу списка спецификаций
+      window.location.href = '/order-specifications';
+    } else {
+      const error = await response.json();
+      M.toast({ html: `Ошибка при удалении спецификации: ${error.message}`, classes: 'red' });
+    }
+  } catch (error) {
+    console.error('Ошибка при удалении спецификации:', error);
+    M.toast({ html: 'Произошла ошибка при удалении спецификации', classes: 'red' });
+  }
+});
+
+const updateCompletedStatus = async () => {
+  try {
+    const response = await fetch(`/order/${orderId}/complete`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ isCompleted: isCompletedCheckbox.checked })
+    });
+
+    if (response.ok) {
+      const updatedOrderSpecification = await response.json();
+      isCompletedCheckbox.checked = updatedOrderSpecification.isCompleted;
+      isCompletedLabel.textContent = updatedOrderSpecification.isCompleted ? 'Виконано' : 'Не виконано';
+      isCompletedLabel.classList.toggle('blue-text', updatedOrderSpecification.isCompleted);
+
+      M.toast({ html: updatedOrderSpecification.isCompleted ? 'Замовлення успішно відмічене як виконане' : 'Замовлення успішно відмічене як невиконане', classes: 'green' });
+    } else {
+      const error = await response.json();
+      M.toast({ html: `Помилка відмічання замовлення як ${isCompletedCheckbox.checked ? 'виконаного' : 'невиконаного'}: ${error.message}`, classes: 'red' });
+    }
+  } catch (error) {
+    console.error(`Помилка під час відмічання замовлення як ${isCompletedCheckbox.checked ? 'виконаного' : 'невиконаного'}:`, error);
+    M.toast({ html: `Виникла помилка під час відмічання замовлення як ${isCompletedCheckbox.checked ? 'виконаного' : 'невиконаного'}`, classes: 'red' });
+  }
+};
+
+isCompletedCheckbox.addEventListener('change', updateCompletedStatus);
+
+const updateButtonsState = (isPosted) => {
+  sendSpecificationButton.disabled = isPosted;
+  markAsPostedButton.disabled = isPosted;
+};
+
+const updatePostStatus = async () => {
+  try {
+    const response = await fetch(`/order/${orderId}/post`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (response.ok) {
+      const updatedSpecification = await response.json();
+      isPostedCheckbox.checked = updatedSpecification.isPosted;
+      isPostedLabel.textContent = updatedSpecification.isPosted ? 'Проведено' : 'Не проведено';
+      isPostedLabel.classList.toggle('green-text', updatedSpecification.isPosted);
+
+      updateButtonsState(updatedSpecification.isPosted); // Обновляем состояние кнопок
+
+      togglePostedDateCell(updatedSpecification.isPosted, updatedSpecification.postedDate);
+
+      M.toast({ html: 'Специфікацію успішно відмічено як проведену', classes: 'green' });
+    } else {
+      const error = await response.json();
+      M.toast({ html: `Помилка відмічання специфікації як проведеної: ${error.message}`, classes: 'red' });
+    }
+  } catch (error) {
+    console.error('Помилка під час відмічання специфікації як проведеної:', error);
+    M.toast({ html: 'Виникла помилка під час відмічання специфікації як проведеної', classes: 'red' });
+  }
+};
+
+isPostedCheckbox.addEventListener('change', updatePostStatus);
+
+sendSpecificationButton.addEventListener('click', async () => {
+  try {
+    const response = await fetch(`/send-order/${orderId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (response.ok) {
+      M.toast({ html: 'Накладну успішно надіслано на email', classes: 'green' });
+      await updatePostStatus();
+    } else {
+      const error = await response.json();
+      M.toast({ html: `Помилка відправлення накладної: ${error.message}`, classes: 'red' });
+    }
+  } catch (error) {
+    console.error('Помилка під час відправлення накладної:', error);
+    M.toast({ html: 'Виникла помилка під час відправлення накладної', classes: 'red' });
+  }
+});
+
+markAsPostedButton.addEventListener('click', async () => {
+  try {
+    const response = await fetch(`/order/${orderId}/post`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (response.ok) {
+      const updatedSpecification = await response.json();
+      isPostedCheckbox.checked = updatedSpecification.isPosted;
+      isPostedLabel.textContent = updatedSpecification.isPosted ? 'Проведено' : 'Не проведено';
+      isPostedLabel.classList.toggle('green-text', updatedSpecification.isPosted);
+
+      updateButtonsState(updatedSpecification.isPosted); // Обновляем состояние кнопок
+
+      togglePostedDateCell(updatedSpecification.isPosted, updatedSpecification.postedDate);
+
+      M.toast({ html: 'Специфікацію успішно відмічено як проведену', classes: 'green' });
+    } else {
+      const error = await response.json();
+      M.toast({ html: `Помилка відмічання специфікації як проведеної: ${error.message}`, classes: 'red' });
+    }
+  } catch (error) {
+    console.error('Помилка під час відмічання специфікації як проведеної:', error);
+    M.toast({ html: 'Виникла помилка під час відмічання специфікації як проведеної', classes: 'red' });
+  }
+});
+
+downloadPDFButton.addEventListener('click', async (event) => {
+  event.preventDefault();
+
+  try {
+    const response = await fetch(`/order/${orderId}/pdf`);
+    const pdfBlob = await response.blob();
+
+    if (pdfBlob.size === 0) {
+      M.toast({ html: 'Ошибка при генерации PDF-файла', classes: 'red' });
+      return;
+    }
+
+    const downloadUrl = window.URL.createObjectURL(pdfBlob);
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = 'order.pdf';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error('Помилка при завантаженні PDF-файлу:', error);
+    M.toast({ html: 'Виникла помилка при завантаженні PDF-файлу', classes: 'red' });
+  }
+});
+
+const calculateTotalAmount = () => {
+  let totalAmount = 0;
+  const priceElements = document.querySelectorAll('td:nth-child(7) li');
+
+  priceElements.forEach((priceElement, index) => {
+    const price = parseFloat(priceElements[index].textContent);
+    totalAmount += price;
+  });
+
+  return totalAmount.toFixed(2);
+};
+
+const totalAmountDisplay = document.getElementById('totalAmountDisplay');
+totalAmountDisplay.textContent = `Сумарна вартість: ${calculateTotalAmount()} UAH`;
+
+  const updateProgressSteps = (orderStatus) => {
+    const steps = document.querySelectorAll('.step');
+    steps.forEach((step, index) => {
+      if (index < orderStatus) {
+        step.classList.add('active', 'completed');
+      } else {
+        step.classList.remove('active', 'completed');
+      }
+    });
+  };
+
+  document.addEventListener('DOMContentLoaded', () => {
+    updateProgressSteps({{ order.orderStatus }});
+  });
+  
+</script>

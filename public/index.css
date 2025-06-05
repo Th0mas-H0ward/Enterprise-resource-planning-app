@@ -1,0 +1,264 @@
+nav {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 1000;
+}
+
+.user-info {
+  margin-right: 30px;
+}
+
+.dropdown-content li a {
+  text-align: center;
+  margin-left: 0;
+  padding-left: 0.8rem; /* Можно задать небольшой отступ для лучшего вида */
+}
+
+.container {
+  margin-top: 80px;
+  margin-bottom: 32px;
+}
+
+.material {
+  margin-bottom: 1rem;
+}
+
+.material span.completed {
+  text-decoration: line-through;
+}
+
+.material label {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  background: #f3f3f3;
+  padding: 1rem;
+}
+
+.material i {
+  z-index: 2;
+}
+
+.chips {
+  padding: 10px;
+}
+
+.provider-list {
+  list-style: none;
+  padding: 0;
+}
+
+.provider-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.provider-logo {
+  width: 100px;
+  height: auto;
+  margin-right: 20px;
+}
+
+.provider-details {
+  flex-grow: 1;
+}
+
+.provider-title {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.provider-description {
+  margin-top: 5px;
+}
+
+.provider-button {
+  margin-top: 10px;
+}
+
+.provider-title-wrapper {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.provider-title {
+  margin-left: 10px;
+}
+
+.provider-detail {
+  display: flex;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.provider-detail:last-child {
+  margin-bottom: 0;
+}
+
+.provider-detail span {
+  margin-left: 10px;
+}
+
+.card-panel span {
+  display: flex;
+  align-items: center;
+}
+
+.card-panel i {
+  margin-right: 10px;
+}
+
+.logo {
+  max-height: 60px;
+}
+
+.dropdown-trigger {
+  outline: none;
+}
+
+.specifications li {
+  margin-bottom: 20px;
+}
+
+.collection-item {
+  transition: background-color 0.3s ease; /* Добавляем анимацию перехода */
+}
+
+.collection-item:hover {
+  background-color: #f5f5f5; /* Изменяем цвет фона при наведении */
+}
+
+.input-field {
+  margin-bottom: 0; 
+}
+
+.disabled {
+  background-color: #ccc !important;
+  pointer-events: none;
+}
+
+.specification-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  
+}
+
+.specification-header h2 {
+  margin-top: 0; 
+}
+
+.QuantityChip {
+  float: right;
+  margin-top: 10px;
+  font-weight: bold;
+}
+
+.orderRow {
+  cursor: pointer; 
+}
+
+.orderRow:hover {
+  background-color: #f5f5f5; 
+}
+
+.chartControls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.chart-container {
+  max-width: 800px; /* Максимальная ширина для больших экранов */
+  margin: 0 auto; /* Центрирование контейнера */
+  height: auto; /* Высота будет рассчитана автоматически */
+}
+
+.specificationCheckboxes {
+  display: flex;
+  gap: 20px;
+}
+
+.orderSpecification-buttons {
+  padding-top: 10px;
+  display: inline-block;
+  gap: 5px;
+}
+
+.order-progress {
+  background-color: #ffffff;
+  border: 1px solid #dee2e6;
+  border-radius: 5px;
+  padding: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.progress-steps {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  justify-content: space-between;
+  margin: 0;
+}
+
+.step {
+  text-align: center;
+  position: relative;
+  flex: 1;
+}
+
+.step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 0;
+  width: 100%;
+  height: 2px;
+  background-color: #dee2e6;
+  transform: translateY(-50%);
+  z-index: -1;
+}
+
+.step.active::after {
+  background-color: #007bff;
+}
+
+.step .step-number {
+  display: inline-block;
+  width: 30px;
+  height: 30px;
+  line-height: 30px;
+  border-radius: 50%;
+  background-color: #dee2e6;
+  color: #ffffff;
+  margin-bottom: 5px;
+}
+
+.step.active .step-number {
+  background-color: #007bff;
+}
+
+.step .step-label {
+  color: #6c757d;
+}
+
+.step.active .step-label {
+  color: #007bff;
+}
+
+.step.completed::after {
+  background-color: #007bff;
+}
+
+.step.completed .step-number {
+  background-color: #007bff;
+}
+
+.step.completed .step-label {
+  color: #007bff;
+}
