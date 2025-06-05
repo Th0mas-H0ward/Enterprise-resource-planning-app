@@ -62,7 +62,7 @@ function generateOrderInformation(doc, order) {
 
   
     .font("DejaVuSans")
-    .text("ПП: Олінкевич Я.В.", 300, orderInformationTop)
+    .text("ПП: Ім'я Прізвище.", 300, orderInformationTop)
     .font("DejaVuSans")
     .text("Адреса: Україна, м. Київ, вул. Лісна 24", 300, orderInformationTop + 15)
     .moveDown();
