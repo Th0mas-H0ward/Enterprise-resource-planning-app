@@ -1,6 +1,6 @@
 module.exports = {
   mongodb: {
-    uri: 'mongodb+srv://Thomas_Howard:Yarik31082002@cluster0.ibqjpdg.mongodb.net/todos'
+    mongodb+srv://{{username}}:<db_password>@cluster0.ibqjpdg.mongodb.net/
   },
   session: {
     secret: 'your-secret-key'
