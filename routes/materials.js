@@ -86,7 +86,6 @@ router.post('/api/materials', async (req, res) => {
   }
 });
 
-// В файле router.js
 router.delete('/api/materials/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -142,32 +141,25 @@ router.get('/api/provider-materials', auth, checkRole(['purchase_manager']), asy
 
 router.post('/order', async (req, res) => {
   try {
-    // Получение данных из формы заказа
     const { delivery_date, provider, materials } = req.body;
 
-    // Найти поставщика по его идентификатору
     const providerData = await Provider.findById(provider);
 
-    // Преобразование массива materials в нужный формат
     const materialsData = materials.map(item => ({
       title: item.title,
       quantity: parseInt(item.quantity),
       price: parseFloat(item.price)
     }));
 
-    // Создание новой записи Спецификации в базе данных
     const specification = new Specification({
       date: delivery_date,
-      provider: providerData.provider, // Сохраняем имя поставщика
-      email: providerData.email, // Добавляем email поставщика
+      provider: providerData.provider, 
+      email: providerData.email, 
       isPosted: false,
       materials: materialsData
     });
 
-    // Сохранение новой записи в базе данных
     await specification.save();
-
-    // Отправка ответа клиенту
 
   } catch (error) {
     console.error('Помилка під час створення специфікації:', error);
