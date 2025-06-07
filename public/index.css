@@ -12,7 +12,7 @@ nav {
 .dropdown-content li a {
   text-align: center;
   margin-left: 0;
-  padding-left: 0.8rem; /* Можно задать небольшой отступ для лучшего вида */
+  padding-left: 0.8rem; 
 }
 
 .container {
@@ -126,11 +126,11 @@ nav {
 }
 
 .collection-item {
-  transition: background-color 0.3s ease; /* Добавляем анимацию перехода */
+  transition: background-color 0.3s ease; 
 }
 
 .collection-item:hover {
-  background-color: #f5f5f5; /* Изменяем цвет фона при наведении */
+  background-color: #f5f5f5;
 }
 
 .input-field {
@@ -174,9 +174,9 @@ nav {
 }
 
 .chart-container {
-  max-width: 800px; /* Максимальная ширина для больших экранов */
-  margin: 0 auto; /* Центрирование контейнера */
-  height: auto; /* Высота будет рассчитана автоматически */
+  max-width: 800px; 
+  margin: 0 auto; 
+  height: auto; 
 }
 
 .specificationCheckboxes {
