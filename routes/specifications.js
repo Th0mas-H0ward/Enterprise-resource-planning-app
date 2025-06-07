@@ -30,7 +30,6 @@ router.get('/specifications', auth, checkRole(['purchase_manager']), async (req,
   });
 });
 
-// Обработчик маршрута для отображения подробной информации о спецификации
 router.get('/specification/:id', auth, checkRole(['purchase_manager']), async (req, res) => {
   try {
     const specificationId = req.params.id;
@@ -57,11 +56,9 @@ router.get('/specification/:id/pdf', auth, checkRole(['purchase_manager']), asyn
       return res.status(404).send('Специфікація не знайдена');
     }
 
-    // Обновляем документ спецификации, установив поле isPosted в true
     specification.isPosted = true;
     await specification.save();
 
-    // Генерируем PDF-файл спецификации
     const pdfBuffer = await new Promise((resolve, reject) => {
       const chunks = [];
       const dataCallback = (chunk) => chunks.push(chunk);
@@ -78,11 +75,9 @@ router.get('/specification/:id/pdf', auth, checkRole(['purchase_manager']), asyn
   }
 });
 
-// Маршрут для удаления спецификации
 router.delete('/specification/:id', async (req, res) => {
   try {
     const specificationId = req.params.id;
-    // Обновляем флаг isDeleted вместо удаления документа
     const updatedSpecification = await Specification.findByIdAndUpdate(
       specificationId,
       { isDeleted: true },
@@ -103,7 +98,6 @@ router.delete('/specification/:id', async (req, res) => {
 router.delete('/specification-details/:id', async (req, res) => {
   try {
     const specificationId = req.params.id;
-    // Удаление спецификации по ID
     await Specification.findByIdAndDelete(specificationId);
     res.json({ message: 'Спецификацію успішно видалено' });
   } catch (err) {
@@ -113,10 +107,10 @@ router.delete('/specification-details/:id', async (req, res) => {
 });
 
 const transporter = nodemailer.createTransport({
-  service: 'gmail', // или другой сервис электронной почты
+  service: 'gmail', 
   auth: {
-    user: 'olinkevich.yaroslav@gmail.com', // email
-    pass: 'hojx lyqr whoi fmri' // пароль
+    user: 'olinkevich.yaroslav@gmail.com', 
+    pass: 'hojx lyqr whoi fmri' 
   }
 });
 
@@ -128,8 +122,7 @@ router.post('/send-specification/:id', async (req, res) => {
     if (!specification) {
       return res.status(404).json({ message: 'Специфікація не знайдена' });
     }
-
-    // Генерируем PDF-файл спецификации
+    
     const pdfBuffer = await new Promise((resolve, reject) => {
       const chunks = [];
       const dataCallback = (chunk) => chunks.push(chunk);
@@ -139,16 +132,14 @@ router.post('/send-specification/:id', async (req, res) => {
     
     const pdfUint8Array = new Uint8Array(pdfBuffer);
 
-    // Создаем вложение PDF-файла для email
     const attachment = {
       filename: `specification_${specificationId}.pdf`,
       content: pdfUint8Array
     };
 
-    // Отправляем email с вложением PDF-файла
     const mailOptions = {
-      from: 'olinkevich.yaroslav@gmail.com', // ваш email
-      to: specification.email, // email получателя (поставщика)
+      from: 'olinkevich.yaroslav@gmail.com', 
+      to: specification.email, ка)
       subject: 'Нова специфікація',
       text: 'Вкладений PDF-файл містить деталі замовлення.' + (req.body.comment ? `\n\nКоментар до замовлення: ${req.body.comment}` : ''),
       attachments: [attachment]
@@ -167,7 +158,6 @@ router.put('/specification/:id/post', async (req, res) => {
   try {
     const specificationId = req.params.id;
 
-    // Обновляем документ спецификации, установив поле isPosted в true и заполняем postedDate текущей датой
     const updatedSpecification = await Specification.findByIdAndUpdate(
       specificationId,
       { isPosted: true, postedDate: new Date() },
