@@ -2,23 +2,23 @@ const { Schema, model } = require('mongoose')
 
 const productSchema = new Schema({
   title: {
-    type: String, //назва продукту
+    type: String, 
     required: true
   },
 
-  quantity: { //кількість продуктів
+  quantity: {
     type: Number,
     required: true
   },
 
-  price: { //ціна продукту
+  price: { 
     type: Number,
     required: true
   }
 });
 
 const schema = new Schema({
-  date: { //Бажана дата доставки замовлення 
+  date: { 
     type: String,
     required: true
   },
@@ -44,7 +44,7 @@ const schema = new Schema({
     default: false
   },
 
-  postedDate: { //Дата створення замовлення
+  postedDate: { 
     type: Date
   },
 
