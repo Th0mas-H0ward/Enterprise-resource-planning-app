@@ -2,44 +2,44 @@ const { Schema, model } = require('mongoose')
 
 const materialSchema = new Schema({
   title: {
-    type: String, //назва матеріалу
+    type: String, 
     required: true
   },
 
-  quantity: { //кількість матеріалу
+  quantity: { 
     type: Number,
     required: true
   },
 
-  price: { //ціна матеріалу
+  price: { 
     type: Number,
     required: true
   }
 });
 
 const specificationSchema = new Schema({
-  date: { //Бажана дата доставки замовлення 
+  date: { 
     type: String,
     required: true
   },
 
-  provider: { //компанія-постачальник
+  provider: { 
     type: String,
     required: true
   },
 
-  email: { //імейл постачальника
+  email: { 
     type: String,
     required: true
   },
 
-  isPosted: { // статус, що каже про те, чи була відправлена заявка на замовлення постачльникові
+  isPosted: { 
     type: Boolean,
     required: true,
     default: false
   },
 
-  postedDate: { //Дата подання заявки
+  postedDate: { 
     type: Date
   },
 
