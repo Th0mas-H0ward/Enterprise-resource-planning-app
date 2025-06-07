@@ -86,10 +86,8 @@ router.delete('/provider/:id', async (req, res) => {
       return res.status(404).json({ error: 'Постачальника не знайдено' });
     }
 
-    // Удалить все связанные материалы
     await Material.deleteMany({ providerId });
 
-    // Удалить файлы материалов, связанные с этим поставщиком
     const uploadsDir = path.join(__dirname, '..', 'public', 'uploads');
     const providerMaterialsFiles = fs.readdirSync(uploadsDir).filter(file => file.startsWith(providerId));
 
@@ -97,7 +95,6 @@ router.delete('/provider/:id', async (req, res) => {
       fs.unlinkSync(path.join(uploadsDir, file));
     }
 
-    // Удалить поставщика из базы данных
     await Provider.findOneAndDelete({ _id: providerId });
 
     res.json({ message: 'Постачальника успішно видалено' });
