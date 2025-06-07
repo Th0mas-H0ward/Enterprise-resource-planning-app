@@ -6,7 +6,6 @@ class authController {
   async login(req, res, next) {
     passport.authenticate('local', (err, user, info) => {
       if (err || !user) {
-        // Обработка ошибки или неверных данных
         return res.render('login', { layout: 'login-layout', error: info ? info.message : 'Login failed' });
       }
   
@@ -15,7 +14,6 @@ class authController {
           return next(err);
         }
   
-        // Определяем роль пользователя и перенаправляем на соответствующий маршрут
         switch (user.role) {
           case 'order_manager':
             return res.redirect('/order-specifications');
