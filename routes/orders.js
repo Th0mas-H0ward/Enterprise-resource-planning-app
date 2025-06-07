@@ -19,7 +19,7 @@ router.get('/place-order', auth, checkRole(['order_manager']), async (req, res) 
       layout: 'order-mngr.hbs',
       title: 'Створення замовлення',
       isCreate: true,
-      products: JSON.stringify(products), // Преобразуем массив в JSON-строку
+      products: JSON.stringify(products), 
       uniqueCategories,
       name: req.user.name
     });
@@ -143,7 +143,6 @@ router.post('/send-order/:id', auth, checkRole(['order_manager']), async (req, r
       return res.status(404).json({ message: 'Специфікація не знайдена' });
     }
 
-    // Генерируем PDF-файл спецификации
     const pdfBuffer = await new Promise((resolve, reject) => {
       const chunks = [];
       const dataCallback = (chunk) => chunks.push(chunk);
@@ -153,16 +152,14 @@ router.post('/send-order/:id', auth, checkRole(['order_manager']), async (req, r
     
     const pdfUint8Array = new Uint8Array(pdfBuffer);
 
-    // Создаем вложение PDF-файла для email
     const attachment = {
       filename: `order_${orderId}.pdf`,
       content: pdfUint8Array
     };
 
-    // Отправляем email с вложением PDF-файла
     const mailOptions = {
-      from: 'olinkevich.yaroslav@gmail.com', // ваш email
-      to: order.email, // email получателя (поставщика)
+      from: 'olinkevich.yaroslav@gmail.com',
+      to: order.email, 
       subject: 'Ваше замовлення',
       text: 'Вкладений PDF-файл містить деталі замовлення.' + (req.body.comment ? `\n\nКоментар до замовлення: ${req.body.comment}` : ''),
       attachments: [attachment]
@@ -192,7 +189,6 @@ router.put('/order/:id/post', async (req, res) => {
   try {
     const orderSpecificationId = req.params.id;
 
-    // Обновляем документ спецификации, установив поле isPosted в true и заполняем postedDate текущей датой
     const updatedOrderSpecification = await Order.findByIdAndUpdate(
       orderSpecificationId,
       { isPosted: true, postedDate: new Date(), orderStatus: "1" },
