@@ -107,21 +107,16 @@ function generateOrderTable(doc, specification) {
 
   const duePosition = orderTableTop + (i + 1) * 30;
 
-  // Добавляем блок после табли
-
-  // Общая сумма
   doc.font("DejaVuSans-Bold")
       .text("Загальна сума", 310, duePosition + 20);
   doc.font("DejaVuSans")
       .text(`${totalPrice} UAH`, 480, duePosition + 20);
 
-  // Сплачено
   doc.font("DejaVuSans-Bold")
       .text("Сплачено", 310, duePosition + 40);
   doc.font("DejaVuSans")
       .text("0 UAH", 480, duePosition + 40);
 
-  // До сплати
   doc.font("DejaVuSans-Bold")
       .text("До сплати", 310, duePosition + 60);
   doc.font("DejaVuSans")
