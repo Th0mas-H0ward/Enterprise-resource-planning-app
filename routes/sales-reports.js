@@ -7,8 +7,8 @@ const router = Router();
 router.get('/sales-reports', auth, checkRole(['order_manager']), async (req, res) => {
   try {
     const year = new Date().getFullYear();
-    const startDate = new Date(year - 2, 0, 1); // 1 января 2 года назад
-    const endDate = new Date(year + 2, 11, 31); // 31 декабря 2 года вперед
+    const startDate = new Date(year - 2, 0, 1); 
+    const endDate = new Date(year + 2, 11, 31); 
 
     const orders = await Order.find({
       postedDate: { $gte: startDate, $lte: endDate },
