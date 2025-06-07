@@ -19,7 +19,6 @@ const importProvider = async (req, res) => {
     provider.materials = [...provider.materials, ...materialsData];
     await provider.save();
 
-    // Отправляем успешный ответ на фронтенд
     res.status(200).json({ success: true, provider });
   } catch (error) {
     res.status(400).json({ success: false, msg: error.message });
